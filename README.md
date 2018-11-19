@@ -85,7 +85,7 @@ TvRecyclerView框架[TvRecyclerView](https://github.com/zhousuqiang/TvRecyclerVi
 
 Tab框架[TvTabLayout](https://github.com/zhousuqiang/TvTabLayout)
 
-Tv控件[TvWidget](https://github.com/zhousuqiang/TvWidgetDemo)
+Tv控件[TvWidget](https://github.com/zhousuqiang/TvWidget)
 
 
 作者 [owen](https://github.com/zhousuqiang)
