@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -21,11 +22,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
@@ -40,9 +41,11 @@ import java.util.List;
 public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTreeObserver.OnGlobalFocusChangeListener{
     private static final long DEFAULT_ANIM_DURATION_TIME = 300;
     private static final long DEFAULT_SHIMMER_DURATION_TIME = 1000;
+    private static final long DEFAULT_BREATHING_DURATION_TIME = 3000;
     
     protected long mAnimDuration = DEFAULT_ANIM_DURATION_TIME;
     protected long mShimmerDuration = DEFAULT_SHIMMER_DURATION_TIME;
+    protected long mBreathingDuration = DEFAULT_BREATHING_DURATION_TIME;
     protected RectF mFrameRectF = new RectF();
     protected RectF mPaddingRectF = new RectF();
     protected RectF mPaddingOfsetRectF = new RectF();
@@ -54,7 +57,8 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     private int mShimmerColor = 0x66FFFFFF;
     private float mShimmerTranslate = 0;
     private boolean mShimmerAnimating = false;
-    private boolean mIsShimmerAnim = true;
+    private boolean mRunShimmerAnim = true;
+    private boolean mRunBreathingAnim = true;
     private boolean mReAnim = false; //修复RecyclerView焦点临时标记
 
     private ObjectAnimator mTranslationXAnimator;
@@ -62,6 +66,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     private ObjectAnimator mWidthAnimator;
     private ObjectAnimator mHeightAnimator;
     private ObjectAnimator mShimmerAnimator;
+    private ObjectAnimator mBreathingLampAnimator;
     private AnimatorSet mAnimatorSet;
 
     private RecyclerViewScrollListener mRecyclerViewScrollListener;
@@ -73,12 +78,12 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     private float mScaleX;
     private float mScaleY;
     
-    protected AbsFocusBorder(Context context, int shimmerColor, long shimmerDuration, boolean isShimmerAnim, long animDuration, RectF paddingOfsetRectF) {
+    protected AbsFocusBorder(Context context, int shimmerColor, long shimmerDuration, boolean runShimmerAnim, long animDuration, RectF paddingOfsetRectF) {
         super(context);
         
         this.mShimmerColor = shimmerColor;
         this.mShimmerDuration = shimmerDuration;
-        this.mIsShimmerAnim = isShimmerAnim;
+        this.mRunShimmerAnim = runShimmerAnim;
         this.mAnimDuration = animDuration;
         if(null != paddingOfsetRectF) {
             this.mPaddingOfsetRectF.set(paddingOfsetRectF);
@@ -152,7 +157,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     }
 
     protected void setShimmerTranslate(float shimmerTranslate) {
-        if(mIsShimmerAnim && mShimmerTranslate != shimmerTranslate) {
+        if(mRunShimmerAnim && mShimmerTranslate != shimmerTranslate) {
             mShimmerTranslate = shimmerTranslate;
             ViewCompat.postInvalidateOnAnimation(this);
         }
@@ -180,7 +185,11 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     public void setVisible(boolean visible) {
         if(mIsVisible != visible) {
             mIsVisible = visible;
-            
+    
+            if(null != mAnimatorSet) {
+                mAnimatorSet.cancel();
+            }
+    
             animate().alpha(visible ? 1f : 0f).setDuration(mAnimDuration).start();
             
             if(!visible && null != mOldFocusView && null != mOldFocusView.get()) {
@@ -341,6 +350,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
             mAnimatorSet.cancel();
         }
         
+        setAlpha(1f);
         createBorderAnimation(focusView, options);
 
         mAnimatorSet.start();
@@ -387,9 +397,12 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
 
         final List<Animator> sequentially = new ArrayList<>();
         final List<Animator> appendSequentially = getSequentiallyAnimators(newX, newY, newWidth, newHeight, options);
-        if(mIsShimmerAnim) { 
+        if(mRunShimmerAnim) {
             sequentially.add(getShimmerAnimator());
-        } 
+        }
+        if(mRunBreathingAnim) {
+            sequentially.add(getBreathingLampAnimator());
+        }
         if(null != appendSequentially && !appendSequentially.isEmpty()) {
             sequentially.addAll(appendSequentially);
         }
@@ -399,6 +412,8 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         mAnimatorSet.playTogether(together);
         mAnimatorSet.playSequentially(sequentially);
     }
+    
+    
     
     private ObjectAnimator getTranslationXAnimator(float x) {
         if(null == mTranslationXAnimator) {
@@ -440,6 +455,10 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         return mWidthAnimator;
     }
     
+    /**
+     * 闪光动画
+     * @return Animator
+     */
     private ObjectAnimator getShimmerAnimator() {
         if(null == mShimmerAnimator) {
             mShimmerAnimator = ObjectAnimator.ofFloat(this, "shimmerTranslate", -1f, 1f);
@@ -459,6 +478,22 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
             });
         }
         return mShimmerAnimator;
+    }
+    
+    /**
+     * 呼吸灯动画
+     * @return Animator
+     */
+    private ObjectAnimator getBreathingLampAnimator() {
+        if(null == mBreathingLampAnimator) {
+            mBreathingLampAnimator = ObjectAnimator
+                    .ofFloat(this, "alpha", 1f, 0.22f, 1f);
+            mBreathingLampAnimator.setDuration(mBreathingDuration);
+            mBreathingLampAnimator.setStartDelay(400);
+            mBreathingLampAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+            mBreathingLampAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        }
+        return mBreathingLampAnimator;
     }
 
     abstract float getRoundRadius();
@@ -519,10 +554,22 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     
     public static abstract class Builder {
         protected int mShimmerColor = 0x66FFFFFF;
-        protected boolean mIsShimmerAnim = true;
+        protected boolean mRunShimmerAnim = true;
+        protected boolean mRunBreatingAnim = true;
         protected long mAnimDuration = AbsFocusBorder.DEFAULT_ANIM_DURATION_TIME;
         protected long mShimmerDuration = AbsFocusBorder.DEFAULT_SHIMMER_DURATION_TIME;
+        protected long mBreathingDuration = AbsFocusBorder.DEFAULT_BREATHING_DURATION_TIME;
         protected RectF mPaddingOffsetRectF = new RectF();
+        
+        public Builder breathingDuration(long duration) {
+            this.mBreathingDuration = duration;
+            return this;
+        }
+        
+        public Builder noBreathing() {
+            this.mRunBreatingAnim = false;
+            return this;
+        }
 
         public Builder shimmerColor(@ColorInt int color) {
             this.mShimmerColor = color;
@@ -544,7 +591,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         }
 
         public Builder noShimmer() {
-            this.mIsShimmerAnim = false;
+            this.mRunShimmerAnim = false;
             return this;
         }
         

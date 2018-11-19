@@ -34,19 +34,23 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 //阴影颜色
                 .shadowColor(Color.parseColor("#3FBB66"))
                 //边框宽度(方法borderWidth(2f)也可以设置边框宽度)
-                .borderWidth(TypedValue.COMPLEX_UNIT_DIP, 3.2f)
+                .borderWidth(TypedValue.COMPLEX_UNIT_DIP, 3.5f)
                 //边框颜色
                 .borderColor(Color.parseColor("#00FF00"))
                 //padding值
                 .padding(2f)
                 //动画时长
                 .animDuration(300)
-                //不要闪光动画
+                //不要闪光效果动画
 //                .noShimmer()
                 //闪光颜色
                 .shimmerColor(Color.parseColor("#66FFFFFF"))
                 //闪光动画时长
                 .shimmerDuration(1000)
+                //不要呼吸灯效果
+//                .noBreathing()
+                //呼吸灯效果时长
+                .breathingDuration(3000)
                 .build(this);
         
         //焦点监听 方式一:绑定整个页面的焦点监听事件

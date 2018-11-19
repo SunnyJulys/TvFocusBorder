@@ -91,7 +91,7 @@ public class DrawableFocusBorder extends AbsFocusBorder {
                     Build.VERSION.SDK_INT >= 21 ? parent.getContext().getDrawable(mBorderResId) 
                             : parent.getContext().getResources().getDrawable(mBorderResId);
             final DrawableFocusBorder boriderView = new DrawableFocusBorder(
-                    parent.getContext(), mShimmerColor, mShimmerDuration, mIsShimmerAnim, 
+                    parent.getContext(), mShimmerColor, mShimmerDuration, mRunShimmerAnim,
                     mAnimDuration, mPaddingOffsetRectF, drawable);
             final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(1,1);
             parent.addView(boriderView, lp);

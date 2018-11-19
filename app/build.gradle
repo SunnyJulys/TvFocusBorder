@@ -27,7 +27,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     implementation 'me.jessyan:autosize:1.0.5'
-    implementation 'com.owen:tv-widget:1.0.0'
+    implementation 'com.owen:tv-widget:1.0.1'
     implementation project(":tv-focusborder")
 //    implementation 'com.owen:tv-focusborder:1.0.0'
 }

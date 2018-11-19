@@ -263,7 +263,7 @@ public class ColorFocusBorder extends AbsFocusBorder {
             }
             
             final ColorFocusBorder borderView = new ColorFocusBorder(parent.getContext(),
-                    mShimmerColor, mShimmerDuration, mIsShimmerAnim, mAnimDuration, mPaddingOffsetRectF,
+                    mShimmerColor, mShimmerDuration, mRunShimmerAnim, mAnimDuration, mPaddingOffsetRectF,
                     mShadowColor, mShadowWidth, mBorderColor, mBorderWidth);
             final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(1,1);
             parent.addView(borderView, lp);

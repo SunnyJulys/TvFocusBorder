@@ -12,7 +12,7 @@
 
 ### Gradle 引入
 ```java
-implementation 'com.owen:tv-focusborder:1.0.0'
+implementation 'com.owen:tv-focusborder:1.0.1'
 ```
 
 ### 使用
@@ -32,11 +32,15 @@ FocusBorder mColorFocusBorder = new FocusBorder.Builder().asColor()
         //动画时长
         .animDuration(300)
         //不要闪光动画
-        .noShimmer()
+        //.noShimmer()
         //闪光颜色
         .shimmerColor(Color.parseColor("#66FFFFFF"))
         //闪光动画时长
         .shimmerDuration(1000)
+        //不要呼吸灯效果
+        //.noBreathing()
+        //呼吸灯效果时长
+        .breathingDuration(3000)
         .build(this);
 
 //焦点监听 方式一:绑定整个页面的焦点监听事件
@@ -63,6 +67,7 @@ mColorFocusBorder.boundGlobalFocusListener(new FocusBorder.OnFocusCallback() {
 /** 图片焦点框 */
 FocusBorder mDrawableFocusBorder = new FocusBorder.Builder().asDrawable()
         .borderDrawableRes(R.mipmap.focus)
+        ...
         .build(this);
 
 //焦点监听 方式二:单个的焦点监听事件
