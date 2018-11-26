@@ -30,12 +30,12 @@ publish {
     userOrg = 'zhousuqiang'
     groupId = 'com.owen'
     artifactId = 'tv-focusborder'
-    publishVersion = '1.0.1'
+    publishVersion = '1.0.2'
     desc = 'TvFocusBorder is android tv focus border'
     website = 'https://github.com/zhousuqiang/TvFocusBorder'
 }
 
 dependencies {
-    implementation "com.android.support:appcompat-v7:$rootProject.ext.supportVersion"
+    api "com.android.support:appcompat-v7:$rootProject.ext.supportVersion"
     api "com.android.support:recyclerview-v7:$rootProject.ext.supportVersion"
 }

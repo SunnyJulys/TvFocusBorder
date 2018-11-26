@@ -30,21 +30,21 @@ import java.util.List;
 public class ColorFocusBorder extends AbsFocusBorder {
     private Paint mShadowPaint;
     private Paint mBorderPaint;
-    private int mShadowColor = Color.RED;
-    private float mShadowWidth = 20f;
-    private int mBorderColor = Color.DKGRAY;
-    private float mBorderWidth = 2f;
+    private int mShadowColor;
+    private float mShadowWidth;
+    private int mBorderColor;
+    private float mBorderWidth;
     private float mRoundRadius = 0;
 
     private ObjectAnimator mRoundRadiusAnimator;
     
-    private ColorFocusBorder(Context context, int shimmerColor, long shimmerDuration, boolean isShimmerAnim, long animDuration, RectF paddingOfsetRectF,
-                             int shadowColor, float shadowWidth, int borderColor, float borderWidth) {
-        super(context, shimmerColor, shimmerDuration, isShimmerAnim, animDuration, paddingOfsetRectF);
-        this.mShadowColor = shadowColor;
-        this.mShadowWidth = shadowWidth;
-        this.mBorderColor = borderColor;
-        this.mBorderWidth = borderWidth;
+    private ColorFocusBorder(Context context, RectF paddingOffsetRectF, Builder builder) {
+        super(context, paddingOffsetRectF, builder);
+
+        this.mShadowColor = builder.mShadowColor;
+        this.mShadowWidth = builder.mShadowWidth;
+        this.mBorderColor = builder.mBorderColor;
+        this.mBorderWidth = builder.mBorderWidth;
 
         final float padding = mShadowWidth + mBorderWidth;
         mPaddingRectF.set(padding, padding, padding, padding);
@@ -262,9 +262,7 @@ public class ColorFocusBorder extends AbsFocusBorder {
                 }
             }
             
-            final ColorFocusBorder borderView = new ColorFocusBorder(parent.getContext(),
-                    mShimmerColor, mShimmerDuration, mRunShimmerAnim, mAnimDuration, mPaddingOffsetRectF,
-                    mShadowColor, mShadowWidth, mBorderColor, mBorderWidth);
+            final ColorFocusBorder borderView = new ColorFocusBorder(parent.getContext(), mPaddingOffsetRectF, this);
             final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(1,1);
             parent.addView(borderView, lp);
             return borderView;

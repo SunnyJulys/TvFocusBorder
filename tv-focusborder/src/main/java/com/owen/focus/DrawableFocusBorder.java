@@ -18,12 +18,11 @@ import java.util.List;
  */
 
 public class DrawableFocusBorder extends AbsFocusBorder {
-    private Drawable mBorderDrawable;
-    
-    private DrawableFocusBorder(Context context, int shimmerColor, long shimmerDuration, boolean isShimmerAnim, long animDuration, RectF paddingOfsetRectF, Drawable borderDrawable) {
-        super(context, shimmerColor, shimmerDuration, isShimmerAnim, animDuration, paddingOfsetRectF);
-        
-        this.mBorderDrawable = borderDrawable;
+
+    private DrawableFocusBorder(Context context, RectF paddingOffsetRectF, Builder builder) {
+        super(context, paddingOffsetRectF, builder);
+
+        Drawable mBorderDrawable = builder.mBorderDrawable;
         final Rect paddingRect = new Rect();
         mBorderDrawable.getPadding(paddingRect);
         mPaddingRectF.set(paddingRect);
@@ -87,15 +86,13 @@ public class DrawableFocusBorder extends AbsFocusBorder {
             if(null == parent) {
                 throw new NullPointerException("The FocusBorder parent cannot be null");
             }
-            final Drawable drawable = null != mBorderDrawable ? mBorderDrawable :
-                    Build.VERSION.SDK_INT >= 21 ? parent.getContext().getDrawable(mBorderResId) 
+            mBorderDrawable = null != mBorderDrawable ? mBorderDrawable :
+                    Build.VERSION.SDK_INT >= 21 ? parent.getContext().getDrawable(mBorderResId)
                             : parent.getContext().getResources().getDrawable(mBorderResId);
-            final DrawableFocusBorder boriderView = new DrawableFocusBorder(
-                    parent.getContext(), mShimmerColor, mShimmerDuration, mRunShimmerAnim,
-                    mAnimDuration, mPaddingOffsetRectF, drawable);
+            final DrawableFocusBorder borderView = new DrawableFocusBorder(parent.getContext(), mPaddingOffsetRectF, this);
             final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(1,1);
-            parent.addView(boriderView, lp);
-            return boriderView;
+            parent.addView(borderView, lp);
+            return borderView;
         }
     }
 }
