@@ -67,6 +67,12 @@ mColorFocusBorder.boundGlobalFocusListener(new FocusBorder.OnFocusCallback() {
 /** 图片焦点框 */
 FocusBorder mDrawableFocusBorder = new FocusBorder.Builder().asDrawable()
         .borderDrawableRes(R.mipmap.focus)
+        .titleBackgroundRes(R.drawable.shape_item_title_bg)
+        .titleMarginBottomAutoAlignBorder()
+        .titleMargin(10, 0, 10, 4)
+        .titlePadding(10)
+        .titleTextColor(Color.LTGRAY)
+        .titleTextSize(24)
         ...
         .build(this);
 
