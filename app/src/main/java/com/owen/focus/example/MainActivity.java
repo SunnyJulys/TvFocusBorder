@@ -89,6 +89,12 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         /** 图片焦点框 */
         mDrawableFocusBorder = new FocusBorder.Builder().asDrawable()
                 .borderDrawableRes(R.mipmap.focus)
+                .titleBackgroundRes(R.drawable.shape_item_title_bg)
+                .titleMarginBottomAutoAlignBorder()
+                .titleMargin(10, 0, 10, 4)
+//                .titlePadding(10)
+                .titleTextColor(Color.LTGRAY)
+                .titleTextSize(24)
                 .build(this);
     
         //焦点监听 方式一:绑定整个页面的焦点监听事件
@@ -110,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
         if(hasFocus) {
-            mDrawableFocusBorder.onFocus(v, FocusBorder.OptionsFactory.get(1.2f, 1.2f));
+            mDrawableFocusBorder.onFocus(v, FocusBorder.OptionsFactory.get(1.2f, 1.2f, "测试标题哈哈哈"));
         }
     }
     

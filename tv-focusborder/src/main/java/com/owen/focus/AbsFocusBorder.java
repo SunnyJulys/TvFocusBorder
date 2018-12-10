@@ -8,6 +8,7 @@ import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -18,10 +19,13 @@ import android.graphics.Shader;
 import android.os.Build;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -29,6 +33,8 @@ import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -38,30 +44,41 @@ import java.util.List;
  * Created by owen on 2017/7/20.
  */
 
-public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTreeObserver.OnGlobalFocusChangeListener{
+public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder, ViewTreeObserver.OnGlobalFocusChangeListener{
     private static final long DEFAULT_ANIM_DURATION_TIME = 300;
+    private static final long DEFAULT_TITLE_ANIM_DURATION_TIME = 400;
     private static final long DEFAULT_SHIMMER_DURATION_TIME = 1000;
     private static final long DEFAULT_BREATHING_DURATION_TIME = 3000;
-    
-    protected long mAnimDuration;
-    protected long mShimmerDuration;
-    protected long mBreathingDuration;
+
+    protected Builder mBuilder;
+
+//    protected long mAnimDuration;
+//    protected long mShimmerDuration;
+//    protected long mBreathingDuration;
+
     protected RectF mFrameRectF = new RectF();
     protected RectF mPaddingRectF = new RectF();
-    protected RectF mPaddingOffsetRectF = new RectF();
+//    protected RectF mPaddingOffsetRectF = new RectF();
     protected RectF mTempRectF = new RectF();
+//
+//    protected RectF mTitlePaddingRectF;
+//    protected Rect mTitleMarginRect;
+//    protected float mTitleTextSize;
+//    protected int mTitleTextColor;
+//    protected int mTitleBackgroundRes;
+//    protected long mTitleAnimDuration;
 
     private LinearGradient mShimmerLinearGradient;
     private Matrix mShimmerGradientMatrix;
     private Paint mShimmerPaint;
-    private int mShimmerColor;
+//    private int mShimmerColor;
     private float mShimmerTranslate = 0;
     // 闪光动画是否正在执行
     private boolean mShimmerAnimating = false;
     // 闪光动画是否启用
-    private boolean mRunShimmerAnim;
+//    private boolean mRunShimmerAnim;
     // 呼气灯动画是否启用
-    private boolean mRunBreathingAnim;
+//    private boolean mRunBreathingAnim;
     // 修复RecyclerView焦点临时标记
     private boolean mReAnim = false;
 
@@ -70,6 +87,8 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     private ObjectAnimator mWidthAnimator;
     private ObjectAnimator mHeightAnimator;
     private ObjectAnimator mShimmerAnimator;
+    private ObjectAnimator mTitleTranslationYAnimator;
+    private ObjectAnimator mTitleAlphaAnimator;
     private ObjectAnimator mBreathingLampAnimator;
     private AnimatorSet mAnimatorSet;
 
@@ -81,29 +100,60 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     
     private float mScaleX;
     private float mScaleY;
+
+    private TextView mTitleView;
     
-    protected AbsFocusBorder(Context context, RectF paddingOffsetRectF, Builder builder) {
+    protected AbsFocusBorder(Context context, Builder builder) {
         super(context);
-        
-        this.mShimmerColor = builder.mShimmerColor;
-        this.mShimmerDuration = builder.mShimmerDuration;
-        this.mRunShimmerAnim = builder.mRunShimmerAnim;
+        setWillNotDraw(false);
 
-        this.mRunBreathingAnim = builder.mRunBreathingAnim;
-        this.mBreathingDuration = builder.mBreathingDuration;
+        mBuilder = builder;
 
-        this.mAnimDuration = builder.mAnimDuration;
+//        this.mShimmerColor = builder.mShimmerColor;
+//        this.mShimmerDuration = builder.mShimmerDuration;
+//        this.mRunShimmerAnim = builder.mRunShimmerAnim;
+//        this.mRunBreathingAnim = builder.mRunBreathingAnim;
+//        this.mBreathingDuration = builder.mBreathingDuration;
+//        this.mAnimDuration = builder.mAnimDuration;
+//        if(null != paddingOffsetRectF) {
+//            this.mPaddingOffsetRectF.set(paddingOffsetRectF);
+//        }
 
-        if(null != paddingOffsetRectF) {
-            this.mPaddingOffsetRectF.set(paddingOffsetRectF);
-        }
         //关闭硬件加速
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         setVisibility(VISIBLE);
-        setAlpha(0f);
-        
+
+        //绘制闪光相关
         mShimmerPaint = new Paint();
         mShimmerGradientMatrix = new Matrix();
+
+        initTitleView();
+    }
+
+    private void initTitleView() {
+        //标题
+        if(null == mTitleView) {
+            mTitleView = new TextView(getContext());
+            mTitleView.setSingleLine();
+            mTitleView.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+            mTitleView.setSelected(true);
+            //关闭硬件加速
+            mTitleView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            mTitleView.setTextSize(mBuilder.mTitleTextSize);
+            mTitleView.setTextColor(mBuilder.mTitleTextColor);
+            mTitleView.setBackgroundResource(mBuilder.mTitleBackgroundRes);
+            mTitleView.setText(" ");
+            if(null != mBuilder.mTitlePaddingRect) {
+                mTitleView.setPadding(mBuilder.mTitlePaddingRect.left, mBuilder.mTitlePaddingRect.top,
+                        mBuilder.mTitlePaddingRect.right, mBuilder.mTitlePaddingRect.bottom);
+            }
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            if(null != mBuilder.mTitleMarginRect) {
+                params.bottomMargin += mBuilder.mTitleMarginRect.bottom;
+            }
+            addView(mTitleView, params);
+        }
     }
     
     @Override
@@ -119,7 +169,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         if (mShimmerAnimating) {
             canvas.save();
             mTempRectF.set(mFrameRectF);
-            mTempRectF.intersect(mPaddingOffsetRectF);
+            mTempRectF.intersect(mBuilder.mPaddingOffsetRectF);
             float shimmerTranslateX = mTempRectF.width() * mShimmerTranslate;
             float shimmerTranslateY = mTempRectF.height() * mShimmerTranslate;
             mShimmerGradientMatrix.setTranslate(shimmerTranslateX, shimmerTranslateY);
@@ -134,6 +184,10 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         super.onSizeChanged(w, h, oldw, oldh);
         if(w != oldw || h != oldh) {
             mFrameRectF.set(mPaddingRectF.left, mPaddingRectF.top, w - mPaddingRectF.right, h - mPaddingRectF.bottom);
+            if(null != mTitleView) {
+                int maxWidth = (int) (mFrameRectF.width() - mBuilder.mPaddingOffsetRectF.left - mBuilder.mPaddingOffsetRectF.right);
+                mTitleView.setMaxWidth( maxWidth - (null != mBuilder.mTitleMarginRect ? (mBuilder.mTitleMarginRect.left + mBuilder.mTitleMarginRect.right) : 0));
+            }
         }
     }
 
@@ -142,7 +196,15 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         super.onDraw(canvas);
         onDrawShimmer(canvas);
     }
-    
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if(mBuilder.mTitleMarginBottomAutoAlignBorder) {
+            ((FrameLayout.LayoutParams)mTitleView.getLayoutParams()).bottomMargin += (int) (mPaddingRectF.bottom + mBuilder.mPaddingOffsetRectF.bottom);
+        }
+    }
+
     @Override
     protected void onDetachedFromWindow() {
         unBoundGlobalFocusListener();
@@ -153,20 +215,20 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         mShimmerAnimating = shimmerAnimating;
         if(mShimmerAnimating) {
             mTempRectF.set(mFrameRectF);
-            mTempRectF.left += mPaddingOffsetRectF.left;
-            mTempRectF.top += mPaddingOffsetRectF.top;
-            mTempRectF.right -= mPaddingOffsetRectF.right;
-            mTempRectF.bottom -= mPaddingOffsetRectF.bottom;
+            mTempRectF.left += mBuilder.mPaddingOffsetRectF.left;
+            mTempRectF.top += mBuilder.mPaddingOffsetRectF.top;
+            mTempRectF.right -= mBuilder.mPaddingOffsetRectF.right;
+            mTempRectF.bottom -= mBuilder.mPaddingOffsetRectF.bottom;
             mShimmerLinearGradient = new LinearGradient(
                     0, 0, mTempRectF.width(), mTempRectF.height(),
-                    new int[]{0x00FFFFFF, 0x1AFFFFFF, mShimmerColor, 0x1AFFFFFF, 0x00FFFFFF},
+                    new int[]{0x00FFFFFF, 0x1AFFFFFF, mBuilder.mShimmerColor, 0x1AFFFFFF, 0x00FFFFFF},
                     new float[]{0f, 0.2f, 0.5f, 0.8f, 1f}, Shader.TileMode.CLAMP);
             mShimmerPaint.setShader(mShimmerLinearGradient);
         }
     }
 
     protected void setShimmerTranslate(float shimmerTranslate) {
-        if(mRunShimmerAnim && mShimmerTranslate != shimmerTranslate) {
+        if(mBuilder.mRunShimmerAnim && mShimmerTranslate != shimmerTranslate) {
             mShimmerTranslate = shimmerTranslate;
             ViewCompat.postInvalidateOnAnimation(this);
         }
@@ -199,7 +261,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
                 mAnimatorSet.cancel();
             }
     
-            animate().alpha(visible ? 1f : 0f).setDuration(mAnimDuration).start();
+            animate().alpha(visible ? 1f : 0f).setDuration(mBuilder.mAnimDuration).start();
             
             if(!visible && null != mOldFocusView && null != mOldFocusView.get()) {
                 runFocusScaleAnimation(mOldFocusView.get(), 1f, 1f);
@@ -311,8 +373,8 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     
     private void restoreFocusBorder(@Nullable View oldFocus, @NonNull View newFocus, @Nullable Options options) {
         if(null == oldFocus) {
-            final float paddingWidth = mPaddingRectF.left + mPaddingRectF.right + mPaddingOffsetRectF.left + mPaddingOffsetRectF.right;
-            final float paddingHeight = mPaddingRectF.top + mPaddingRectF.bottom + mPaddingOffsetRectF.top + mPaddingOffsetRectF.bottom;
+            final float paddingWidth = mPaddingRectF.left + mPaddingRectF.right + mBuilder.mPaddingOffsetRectF.left + mBuilder.mPaddingOffsetRectF.right;
+            final float paddingHeight = mPaddingRectF.top + mPaddingRectF.bottom + mBuilder.mPaddingOffsetRectF.top + mBuilder.mPaddingOffsetRectF.bottom;
             final Rect toRect = findLocationWithView(newFocus);
             toRect.inset((int)(-paddingWidth/2), (int)(-paddingHeight/2));
             setWidth(toRect.width());
@@ -349,7 +411,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         mScaleY = options.scaleY;
         // 焦点缩放动画
         runFocusScaleAnimation(focusView, mScaleX, mScaleY);
-        // 移动边框的动画
+        // 边框的动画
         runBorderAnimation(focusView, options);
     }
     
@@ -360,8 +422,11 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         if(null != mAnimatorSet) {
             mAnimatorSet.cancel();
         }
-        
-        setAlpha(1f);
+
+        getBorderView().setAlpha(1f);
+        mTitleView.setAlpha(0);
+        mTitleView.setText(options.title);
+        mTitleView.setTranslationY(mTitleView.getHeight());
         createBorderAnimation(focusView, options);
 
         mAnimatorSet.start();
@@ -376,13 +441,12 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         if(null == oldOrNewFocusView) {
             return;
         }
-        oldOrNewFocusView.animate().scaleX(scaleX).scaleY(scaleY).setDuration(mAnimDuration).start();
+        oldOrNewFocusView.animate().scaleX(scaleX).scaleY(scaleY).setDuration(mBuilder.mAnimDuration).start();
     }
 
     protected void createBorderAnimation(View focusView, Options options) {
-
-        final float paddingWidth = mPaddingRectF.left + mPaddingRectF.right + mPaddingOffsetRectF.left + mPaddingOffsetRectF.right;
-        final float paddingHeight = mPaddingRectF.top + mPaddingRectF.bottom + mPaddingOffsetRectF.top + mPaddingOffsetRectF.bottom;
+        final float paddingWidth = mPaddingRectF.left + mPaddingRectF.right + mBuilder.mPaddingOffsetRectF.left + mBuilder.mPaddingOffsetRectF.right;
+        final float paddingHeight = mPaddingRectF.top + mPaddingRectF.bottom + mBuilder.mPaddingOffsetRectF.top + mBuilder.mPaddingOffsetRectF.bottom;
         final int offsetWidth = (int) (focusView.getMeasuredWidth() * (options.scaleX - 1f) + paddingWidth);
         final int offsetHeight = (int) (focusView.getMeasuredHeight() * (options.scaleY - 1f) + paddingHeight);
     
@@ -397,6 +461,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         
         final List<Animator> together = new ArrayList<>();
         final List<Animator> appendTogether = getTogetherAnimators(newX, newY, newWidth, newHeight, options);
+
         together.add(getTranslationXAnimator(newX));
         together.add(getTranslationYAnimator(newY));
         together.add(getWidthAnimator(newWidth));
@@ -408,14 +473,14 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
 
         final List<Animator> sequentially = new ArrayList<>();
         final List<Animator> appendSequentially = getSequentiallyAnimators(newX, newY, newWidth, newHeight, options);
-        if(mRunShimmerAnim) {
-            sequentially.add(getShimmerAnimator());
-        }
-        if(mRunBreathingAnim) {
-            sequentially.add(getBreathingLampAnimator());
-        }
+
+        sequentially.add(getShimmerAndTitleAnimator(options));
+
         if(null != appendSequentially && !appendSequentially.isEmpty()) {
             sequentially.addAll(appendSequentially);
+        }
+        if(mBuilder.mRunBreathingAnim) {
+            sequentially.add(getBreathingLampAnimator());
         }
 
         mAnimatorSet = new AnimatorSet();
@@ -423,13 +488,31 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         mAnimatorSet.playTogether(together);
         mAnimatorSet.playSequentially(sequentially);
     }
-    
-    
+
+    private Animator getShimmerAndTitleAnimator(Options options) {
+        AnimatorSet set = new AnimatorSet();
+        if(!TextUtils.isEmpty(mTitleView.getText())) {
+            if (null == mTitleTranslationYAnimator) {
+                mTitleTranslationYAnimator = ObjectAnimator.ofFloat(mTitleView, "translationY", mTitleView.getHeight(), 0f).setDuration(mBuilder.mTitleAnimDuration);
+            } else {
+                mTitleTranslationYAnimator.setFloatValues(mTitleView.getHeight(), 0f);
+            }
+            if (null == mTitleAlphaAnimator) {
+                mTitleAlphaAnimator = ObjectAnimator.ofFloat(mTitleView, "alpha", 0f, 1f).setDuration(mBuilder.mTitleAnimDuration);
+            }
+            set.playTogether(mTitleTranslationYAnimator, mTitleAlphaAnimator);
+        }
+        if(mBuilder.mRunShimmerAnim) {
+            set.playTogether(getShimmerAnimator());
+        }
+        set.setStartDelay(400);
+        return set;
+    }
     
     private ObjectAnimator getTranslationXAnimator(float x) {
         if(null == mTranslationXAnimator) {
             mTranslationXAnimator = ObjectAnimator.ofFloat(this, "translationX", x)
-                    .setDuration(mAnimDuration);
+                    .setDuration(mBuilder.mAnimDuration);
         } else {
             mTranslationXAnimator.setFloatValues(x);
         }
@@ -439,7 +522,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     private ObjectAnimator getTranslationYAnimator(float y) {
         if(null == mTranslationYAnimator) {
             mTranslationYAnimator = ObjectAnimator.ofFloat(this, "translationY", y)
-                    .setDuration(mAnimDuration);
+                    .setDuration(mBuilder.mAnimDuration);
         } else {
             mTranslationYAnimator.setFloatValues(y);
         }
@@ -449,7 +532,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     private ObjectAnimator getHeightAnimator(int height) {
         if(null == mHeightAnimator) {
             mHeightAnimator = ObjectAnimator.ofInt(this, "height", getMeasuredHeight(), height)
-                    .setDuration(mAnimDuration);
+                    .setDuration(mBuilder.mAnimDuration);
         } else {
             mHeightAnimator.setIntValues(getMeasuredHeight(), height);
         }
@@ -459,7 +542,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     private ObjectAnimator getWidthAnimator(int width) {
         if(null == mWidthAnimator) {
             mWidthAnimator = ObjectAnimator.ofInt(this, "width", getMeasuredWidth(), width)
-                    .setDuration(mAnimDuration);
+                    .setDuration(mBuilder.mAnimDuration);
         } else {
             mWidthAnimator.setIntValues(getMeasuredWidth(), width);
         }
@@ -474,7 +557,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         if(null == mShimmerAnimator) {
             mShimmerAnimator = ObjectAnimator.ofFloat(this, "shimmerTranslate", -1f, 1f);
             mShimmerAnimator.setInterpolator(new LinearInterpolator());
-            mShimmerAnimator.setDuration(mShimmerDuration);
+            mShimmerAnimator.setDuration(mBuilder.mShimmerDuration);
             mShimmerAnimator.setStartDelay(400);
             mShimmerAnimator.addListener(new AnimatorListenerAdapter() {
                 @Override
@@ -498,14 +581,17 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     private ObjectAnimator getBreathingLampAnimator() {
         if(null == mBreathingLampAnimator) {
             mBreathingLampAnimator = ObjectAnimator
-                    .ofFloat(this, "alpha", 1f, 0.22f, 1f);
-            mBreathingLampAnimator.setDuration(mBreathingDuration);
+                    .ofFloat(getBorderView(), "alpha", 1f, 0.22f, 1f);
+            mBreathingLampAnimator.setDuration(mBuilder.mBreathingDuration);
             mBreathingLampAnimator.setStartDelay(400);
             mBreathingLampAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
             mBreathingLampAnimator.setRepeatCount(ValueAnimator.INFINITE);
         }
         return mBreathingLampAnimator;
     }
+
+    @NonNull
+    public abstract View getBorderView();
 
     abstract float getRoundRadius();
 
@@ -544,6 +630,7 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
     
     public static class Options extends FocusBorder.Options{
         protected float scaleX = 1f, scaleY = 1f;
+        protected String title;
 
         Options() {
         }
@@ -553,8 +640,13 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         }
         
         public static Options get(float scaleX, float scaleY) {
+            return get(scaleX, scaleY, null);
+        }
+
+        public static Options get(float scaleX, float scaleY, String title) {
             OptionsHolder.INSTANCE.scaleX = scaleX;
             OptionsHolder.INSTANCE.scaleY = scaleY;
+            OptionsHolder.INSTANCE.title = title;
             return OptionsHolder.INSTANCE;
         }
         
@@ -571,6 +663,71 @@ public abstract class AbsFocusBorder extends View implements FocusBorder, ViewTr
         protected long mShimmerDuration = AbsFocusBorder.DEFAULT_SHIMMER_DURATION_TIME;
         protected long mBreathingDuration = AbsFocusBorder.DEFAULT_BREATHING_DURATION_TIME;
         protected RectF mPaddingOffsetRectF = new RectF();
+
+        protected Rect mTitlePaddingRect;
+        protected Rect mTitleMarginRect;
+        protected boolean mTitleMarginBottomAutoAlignBorder;
+        protected float mTitleTextSize = 20;
+        protected int mTitleTextColor = 0x66FFFFFF;
+        protected int mTitleBackgroundRes;
+        protected long mTitleAnimDuration = AbsFocusBorder.DEFAULT_TITLE_ANIM_DURATION_TIME;
+
+        public Builder titlePadding(int left, int top, int right, int bottom) {
+            this.mTitlePaddingRect = new Rect(left, top, right, bottom);
+            return this;
+        }
+
+        public Builder titlePadding(int padding) {
+            return titlePadding(padding, padding, padding, padding);
+        }
+
+        public Builder titleMargin(int left, int top, int right, int bottom) {
+            this.mTitleMarginRect = new Rect(left, top, right, bottom);
+            return this;
+        }
+
+        public Builder titleMargin(int margin) {
+            return titleMargin(margin, margin, margin, margin);
+        }
+
+        /**
+         * 标题自动对齐焦点框底部
+         * @return
+         */
+        public Builder titleMarginBottomAutoAlignBorder() {
+            this.mTitleMarginBottomAutoAlignBorder = true;
+            return this;
+        }
+
+        public Builder titleTextSize(float size) {
+            this.mTitleTextSize = size;
+            return this;
+        }
+
+        public Builder titleTextColor(@ColorInt int color) {
+            this.mTitleTextColor = color;
+            return this;
+        }
+
+        public Builder titleTextColor(@ColorRes int colorRes, Context context) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                this.shimmerColor(context.getColor(colorRes));
+            } else {
+                this.titleTextColor(context.getResources().getColor(colorRes));
+            }
+            return this;
+        }
+
+        public Builder titleBackgroundRes(@DrawableRes int drawableRes) {
+            this.mTitleBackgroundRes = drawableRes;
+            return this;
+        }
+
+        public Builder titleAnimDuration(long duration) {
+            this.mTitleAnimDuration = duration;
+            return this;
+        }
+
         
         public Builder breathingDuration(long duration) {
             this.mBreathingDuration = duration;

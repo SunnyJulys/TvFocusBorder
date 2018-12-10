@@ -9,6 +9,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.DrawableRes;
+import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.List;
@@ -19,21 +20,32 @@ import java.util.List;
 
 public class DrawableFocusBorder extends AbsFocusBorder {
 
-    private DrawableFocusBorder(Context context, RectF paddingOffsetRectF, Builder builder) {
-        super(context, paddingOffsetRectF, builder);
+    private View mBorderView;
+
+    private DrawableFocusBorder(Context context, Builder builder) {
+        super(context, builder);
 
         Drawable mBorderDrawable = builder.mBorderDrawable;
         final Rect paddingRect = new Rect();
         mBorderDrawable.getPadding(paddingRect);
         mPaddingRectF.set(paddingRect);
         
+        mBorderView = new View(context);
+        //关闭硬件加速
+        mBorderView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         if(Build.VERSION.SDK_INT >= 16) {
-            setBackground(mBorderDrawable);
+            mBorderView.setBackground(mBorderDrawable);
         } else {
-            setBackgroundDrawable(mBorderDrawable);
+            mBorderView.setBackgroundDrawable(mBorderDrawable);
         }
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        addView(mBorderView, params);
     }
-    
+
+    @Override public View getBorderView() {
+        return mBorderView;
+    }
+
     @Override
     public float getRoundRadius() {
         return 0;
@@ -89,7 +101,7 @@ public class DrawableFocusBorder extends AbsFocusBorder {
             mBorderDrawable = null != mBorderDrawable ? mBorderDrawable :
                     Build.VERSION.SDK_INT >= 21 ? parent.getContext().getDrawable(mBorderResId)
                             : parent.getContext().getResources().getDrawable(mBorderResId);
-            final DrawableFocusBorder borderView = new DrawableFocusBorder(parent.getContext(), mPaddingOffsetRectF, this);
+            final DrawableFocusBorder borderView = new DrawableFocusBorder(parent.getContext(), this);
             final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(1,1);
             parent.addView(borderView, lp);
             return borderView;

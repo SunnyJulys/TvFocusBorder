@@ -42,11 +42,15 @@ public interface FocusBorder {
         }
 
         public static Options get(float scaleX, float scaleY) {
-            return AbsFocusBorder.Options.get(scaleX, scaleY);
+            return get(scaleX, scaleY, null);
         }
         
         public static Options get(float scaleX, float scaleY, float roundRadius) {
             return ColorFocusBorder.Options.get(scaleX, scaleY, roundRadius);
+        }
+
+        public static Options get(float scaleX, float scaleY, String title) {
+            return AbsFocusBorder.Options.get(scaleX, scaleY, title);
         }
     }
 }

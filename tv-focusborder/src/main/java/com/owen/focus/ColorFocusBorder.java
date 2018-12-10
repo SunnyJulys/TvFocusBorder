@@ -15,7 +15,9 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
 import android.support.annotation.IntDef;
 import android.support.v4.view.ViewCompat;
+import android.util.Log;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.ViewGroup;
 
 import java.lang.annotation.Retention;
@@ -37,9 +39,10 @@ public class ColorFocusBorder extends AbsFocusBorder {
     private float mRoundRadius = 0;
 
     private ObjectAnimator mRoundRadiusAnimator;
+    private View mBorderView;
     
-    private ColorFocusBorder(Context context, RectF paddingOffsetRectF, Builder builder) {
-        super(context, paddingOffsetRectF, builder);
+    private ColorFocusBorder(Context context, Builder builder) {
+        super(context, builder);
 
         this.mShadowColor = builder.mShadowColor;
         this.mShadowWidth = builder.mShadowWidth;
@@ -49,6 +52,12 @@ public class ColorFocusBorder extends AbsFocusBorder {
         final float padding = mShadowWidth + mBorderWidth;
         mPaddingRectF.set(padding, padding, padding, padding);
         initPaint();
+
+        mBorderView = new BorderView(context);
+        //关闭硬件加速
+        mBorderView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        addView(mBorderView, params);
     }
     
     private void initPaint() {
@@ -67,10 +76,14 @@ public class ColorFocusBorder extends AbsFocusBorder {
         mBorderPaint.setMaskFilter(new BlurMaskFilter(0.5f, BlurMaskFilter.Blur.NORMAL));
     }
 
+    @Override public View getBorderView() {
+        return mBorderView;
+    }
+
     protected void setRoundRadius(float roundRadius) {
         if(mRoundRadius != roundRadius) {
             mRoundRadius = roundRadius;
-            ViewCompat.postInvalidateOnAnimation(this);
+            ViewCompat.postInvalidateOnAnimation(mBorderView);
         }
     }
 
@@ -137,11 +150,25 @@ public class ColorFocusBorder extends AbsFocusBorder {
         }
     }
 
-    @Override
+    /*@Override
     protected void onDraw(Canvas canvas) {
         onDrawShadow(canvas);
         onDrawBorder(canvas);
         super.onDraw(canvas);
+    }*/
+
+    class BorderView extends View {
+
+        public BorderView(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            onDrawShadow(canvas);
+            onDrawBorder(canvas);
+        }
     }
 
     public static class Options extends AbsFocusBorder.Options {
@@ -262,7 +289,7 @@ public class ColorFocusBorder extends AbsFocusBorder {
                 }
             }
             
-            final ColorFocusBorder borderView = new ColorFocusBorder(parent.getContext(), mPaddingOffsetRectF, this);
+            final ColorFocusBorder borderView = new ColorFocusBorder(parent.getContext(), this);
             final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(1,1);
             parent.addView(borderView, lp);
             return borderView;
