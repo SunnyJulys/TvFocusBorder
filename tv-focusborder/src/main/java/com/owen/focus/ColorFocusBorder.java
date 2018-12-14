@@ -150,13 +150,6 @@ public class ColorFocusBorder extends AbsFocusBorder {
         }
     }
 
-    /*@Override
-    protected void onDraw(Canvas canvas) {
-        onDrawShadow(canvas);
-        onDrawBorder(canvas);
-        super.onDraw(canvas);
-    }*/
-
     class BorderView extends View {
 
         public BorderView(Context context) {
@@ -188,7 +181,14 @@ public class ColorFocusBorder extends AbsFocusBorder {
             OptionsHolder.INSTANCE.roundRadius = roundRadius;
             return OptionsHolder.INSTANCE;
         }
-        
+
+        public static Options get(float scaleX, float scaleY, float roundRadius, String title) {
+            OptionsHolder.INSTANCE.scaleX = scaleX;
+            OptionsHolder.INSTANCE.scaleY = scaleY;
+            OptionsHolder.INSTANCE.roundRadius = roundRadius;
+            OptionsHolder.INSTANCE.title = title;
+            return OptionsHolder.INSTANCE;
+        }
     }
     
     @IntDef({TypedValue.COMPLEX_UNIT_PX, TypedValue.COMPLEX_UNIT_DIP, TypedValue.COMPLEX_UNIT_SP,

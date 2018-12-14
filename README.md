@@ -12,7 +12,7 @@
 
 ### Gradle 引入
 ```java
-implementation 'com.owen:tv-focusborder:1.0.3'
+implementation 'com.owen:tv-focusborder:1.0.4'
 ```
 
 ### 使用
@@ -41,6 +41,8 @@ FocusBorder mColorFocusBorder = new FocusBorder.Builder().asColor()
         //.noBreathing()
         //呼吸灯效果时长
         .breathingDuration(3000)
+        //边框动画模式
+        .animMode(AbsFocusBorder.Mode.SEQUENTIALLY)
         .build(this);
 
 //焦点监听 方式一:绑定整个页面的焦点监听事件
@@ -73,6 +75,7 @@ FocusBorder mDrawableFocusBorder = new FocusBorder.Builder().asDrawable()
         .titlePadding(10)
         .titleTextColor(Color.LTGRAY)
         .titleTextSize(24)
+        .titleWidth(ViewGroup.LayoutParams.MATCH_PARENT)
         ...
         .build(this);
 

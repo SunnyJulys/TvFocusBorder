@@ -1,14 +1,10 @@
 package com.owen.focus;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
@@ -25,14 +21,13 @@ import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.ViewTreeObserver;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -44,52 +39,26 @@ import java.util.List;
  * Created by owen on 2017/7/20.
  */
 
-public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder, ViewTreeObserver.OnGlobalFocusChangeListener{
+public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder, ViewTreeObserver.OnGlobalFocusChangeListener {
     private static final long DEFAULT_ANIM_DURATION_TIME = 300;
     private static final long DEFAULT_TITLE_ANIM_DURATION_TIME = 400;
     private static final long DEFAULT_SHIMMER_DURATION_TIME = 1000;
     private static final long DEFAULT_BREATHING_DURATION_TIME = 3000;
 
     protected Builder mBuilder;
-
-//    protected long mAnimDuration;
-//    protected long mShimmerDuration;
-//    protected long mBreathingDuration;
-
     protected RectF mFrameRectF = new RectF();
     protected RectF mPaddingRectF = new RectF();
-//    protected RectF mPaddingOffsetRectF = new RectF();
     protected RectF mTempRectF = new RectF();
-//
-//    protected RectF mTitlePaddingRectF;
-//    protected Rect mTitleMarginRect;
-//    protected float mTitleTextSize;
-//    protected int mTitleTextColor;
-//    protected int mTitleBackgroundRes;
-//    protected long mTitleAnimDuration;
 
     private LinearGradient mShimmerLinearGradient;
     private Matrix mShimmerGradientMatrix;
     private Paint mShimmerPaint;
-//    private int mShimmerColor;
     private float mShimmerTranslate = 0;
     // 闪光动画是否正在执行
     private boolean mShimmerAnimating = false;
-    // 闪光动画是否启用
-//    private boolean mRunShimmerAnim;
-    // 呼气灯动画是否启用
-//    private boolean mRunBreathingAnim;
     // 修复RecyclerView焦点临时标记
     private boolean mReAnim = false;
 
-    private ObjectAnimator mTranslationXAnimator;
-    private ObjectAnimator mTranslationYAnimator;
-    private ObjectAnimator mWidthAnimator;
-    private ObjectAnimator mHeightAnimator;
-    private ObjectAnimator mShimmerAnimator;
-    private ObjectAnimator mTitleTranslationYAnimator;
-    private ObjectAnimator mTitleAlphaAnimator;
-    private ObjectAnimator mBreathingLampAnimator;
     private AnimatorSet mAnimatorSet;
 
     private RecyclerViewScrollListener mRecyclerViewScrollListener;
@@ -97,27 +66,18 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     private WeakReference<View> mOldFocusView;
     private OnFocusCallback mOnFocusCallback;
     private boolean mIsVisible = false;
-    
+
     private float mScaleX;
     private float mScaleY;
 
-    private TextView mTitleView;
-    
+    protected TextView mTitleView;
+    private AnimatorHelper mAnimatorHelper;
+
     protected AbsFocusBorder(Context context, Builder builder) {
         super(context);
         setWillNotDraw(false);
 
         mBuilder = builder;
-
-//        this.mShimmerColor = builder.mShimmerColor;
-//        this.mShimmerDuration = builder.mShimmerDuration;
-//        this.mRunShimmerAnim = builder.mRunShimmerAnim;
-//        this.mRunBreathingAnim = builder.mRunBreathingAnim;
-//        this.mBreathingDuration = builder.mBreathingDuration;
-//        this.mAnimDuration = builder.mAnimDuration;
-//        if(null != paddingOffsetRectF) {
-//            this.mPaddingOffsetRectF.set(paddingOffsetRectF);
-//        }
 
         //关闭硬件加速
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
@@ -128,11 +88,13 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         mShimmerGradientMatrix = new Matrix();
 
         initTitleView();
+
+        mAnimatorHelper = new AnimatorHelper(this);
     }
 
     private void initTitleView() {
         //标题
-        if(null == mTitleView) {
+        if (null == mTitleView) {
             mTitleView = new TextView(getContext());
             mTitleView.setSingleLine();
             mTitleView.setEllipsize(TextUtils.TruncateAt.MARQUEE);
@@ -143,19 +105,22 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             mTitleView.setTextColor(mBuilder.mTitleTextColor);
             mTitleView.setBackgroundResource(mBuilder.mTitleBackgroundRes);
             mTitleView.setText(" ");
-            if(null != mBuilder.mTitlePaddingRect) {
+            mTitleView.setGravity(Gravity.CENTER);
+            if (null != mBuilder.mTitlePaddingRect) {
                 mTitleView.setPadding(mBuilder.mTitlePaddingRect.left, mBuilder.mTitlePaddingRect.top,
                         mBuilder.mTitlePaddingRect.right, mBuilder.mTitlePaddingRect.bottom);
             }
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(mBuilder.mTitleWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
             params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-            if(null != mBuilder.mTitleMarginRect) {
+            if (null != mBuilder.mTitleMarginRect) {
                 params.bottomMargin += mBuilder.mTitleMarginRect.bottom;
+                params.leftMargin += mBuilder.mTitleMarginRect.left;
+                params.rightMargin += mBuilder.mTitleMarginRect.right;
             }
             addView(mTitleView, params);
         }
     }
-    
+
     @Override
     public boolean isInEditMode() {
         return true;
@@ -163,6 +128,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
 
     /**
      * 绘制闪光
+     *
      * @param canvas
      */
     protected void onDrawShimmer(Canvas canvas) {
@@ -182,11 +148,11 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        if(w != oldw || h != oldh) {
+        if (w != oldw || h != oldh) {
             mFrameRectF.set(mPaddingRectF.left, mPaddingRectF.top, w - mPaddingRectF.right, h - mPaddingRectF.bottom);
-            if(null != mTitleView) {
+            if (null != mTitleView) {
                 int maxWidth = (int) (mFrameRectF.width() - mBuilder.mPaddingOffsetRectF.left - mBuilder.mPaddingOffsetRectF.right);
-                mTitleView.setMaxWidth( maxWidth - (null != mBuilder.mTitleMarginRect ? (mBuilder.mTitleMarginRect.left + mBuilder.mTitleMarginRect.right) : 0));
+                mTitleView.setMaxWidth(maxWidth - (null != mBuilder.mTitleMarginRect ? (mBuilder.mTitleMarginRect.left + mBuilder.mTitleMarginRect.right) : 0));
             }
         }
     }
@@ -200,9 +166,11 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        if(mBuilder.mTitleMarginBottomAutoAlignBorder) {
-            ((FrameLayout.LayoutParams)mTitleView.getLayoutParams()).bottomMargin += (int) (mPaddingRectF.bottom + mBuilder.mPaddingOffsetRectF.bottom);
+        if (mBuilder.mTitleMarginBottomAutoAlignBorder) {
+            ((LayoutParams) mTitleView.getLayoutParams()).bottomMargin += (int) (mPaddingRectF.bottom + mBuilder.mPaddingOffsetRectF.bottom);
         }
+        ((LayoutParams) mTitleView.getLayoutParams()).leftMargin += (int) (mPaddingRectF.left + mBuilder.mPaddingOffsetRectF.left);
+        ((LayoutParams) mTitleView.getLayoutParams()).rightMargin += (int) (mPaddingRectF.right + mBuilder.mPaddingOffsetRectF.right);
     }
 
     @Override
@@ -211,9 +179,9 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         super.onDetachedFromWindow();
     }
 
-    private void setShimmerAnimating(boolean shimmerAnimating) {
+    void setShimmerAnimating(boolean shimmerAnimating) {
         mShimmerAnimating = shimmerAnimating;
-        if(mShimmerAnimating) {
+        if (mShimmerAnimating) {
             mTempRectF.set(mFrameRectF);
             mTempRectF.left += mBuilder.mPaddingOffsetRectF.left;
             mTempRectF.top += mBuilder.mPaddingOffsetRectF.top;
@@ -228,7 +196,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     }
 
     protected void setShimmerTranslate(float shimmerTranslate) {
-        if(mBuilder.mRunShimmerAnim && mShimmerTranslate != shimmerTranslate) {
+        if (mBuilder.mRunShimmerAnim && mShimmerTranslate != shimmerTranslate) {
             mShimmerTranslate = shimmerTranslate;
             ViewCompat.postInvalidateOnAnimation(this);
         }
@@ -239,14 +207,14 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     }
 
     protected void setWidth(int width) {
-        if(getLayoutParams().width != width) {
+        if (getLayoutParams().width != width) {
             getLayoutParams().width = width;
             requestLayout();
         }
     }
 
     protected void setHeight(int height) {
-        if(getLayoutParams().height != height) {
+        if (getLayoutParams().height != height) {
             getLayoutParams().height = height;
             requestLayout();
         }
@@ -254,51 +222,51 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
 
     @Override
     public void setVisible(boolean visible) {
-        if(mIsVisible != visible) {
+        if (mIsVisible != visible) {
             mIsVisible = visible;
-    
-            if(null != mAnimatorSet) {
+
+            if (null != mAnimatorSet) {
                 mAnimatorSet.cancel();
             }
-    
+
             animate().alpha(visible ? 1f : 0f).setDuration(mBuilder.mAnimDuration).start();
-            
-            if(!visible && null != mOldFocusView && null != mOldFocusView.get()) {
+
+            if (!visible && null != mOldFocusView && null != mOldFocusView.get()) {
                 runFocusScaleAnimation(mOldFocusView.get(), 1f, 1f);
                 mOldFocusView.clear();
                 mOldFocusView = null;
             }
         }
     }
-    
+
     @Override
     public boolean isVisible() {
         return mIsVisible;
     }
 
     private void registerScrollListener(RecyclerView recyclerView) {
-        if(null != mWeakRecyclerView && mWeakRecyclerView.get() == recyclerView) {
+        if (null != mWeakRecyclerView && mWeakRecyclerView.get() == recyclerView) {
             return;
         }
 
-        if(null == mRecyclerViewScrollListener) {
+        if (null == mRecyclerViewScrollListener) {
             mRecyclerViewScrollListener = new RecyclerViewScrollListener(this);
         }
-        
-        if(null != mWeakRecyclerView && null != mWeakRecyclerView.get()) {
+
+        if (null != mWeakRecyclerView && null != mWeakRecyclerView.get()) {
             mWeakRecyclerView.get().removeOnScrollListener(mRecyclerViewScrollListener);
             mWeakRecyclerView.clear();
         }
-        
+
         recyclerView.removeOnScrollListener(mRecyclerViewScrollListener);
         recyclerView.addOnScrollListener(mRecyclerViewScrollListener);
-        mWeakRecyclerView = new WeakReference<>(recyclerView);   
+        mWeakRecyclerView = new WeakReference<>(recyclerView);
     }
 
     protected Rect findLocationWithView(View view) {
         return findOffsetDescendantRectToMyCoords(view);
     }
-    
+
     protected Rect findOffsetDescendantRectToMyCoords(View descendant) {
         final ViewGroup root = (ViewGroup) getParent();
         final Rect rect = new Rect();
@@ -306,7 +274,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         if (descendant == root) {
             return rect;
         }
-        
+
         final View srcDescendant = descendant;
 
         ViewParent theParent = descendant.getParent();
@@ -321,14 +289,14 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
 
             //兼容TvRecyclerView
             if (theParent instanceof RecyclerView) {
-                final RecyclerView rv = (RecyclerView)theParent;
+                final RecyclerView rv = (RecyclerView) theParent;
                 registerScrollListener(rv);
                 tag = rv.getTag();
                 if (tag instanceof Point) {
                     point = (Point) tag;
                     rect.offset(-point.x, -point.y);
                 }
-                if(null == tag && rv.getScrollState() != RecyclerView.SCROLL_STATE_IDLE
+                if (null == tag && rv.getScrollState() != RecyclerView.SCROLL_STATE_IDLE
                         && (mRecyclerViewScrollListener.mScrolledX != 0 || mRecyclerViewScrollListener.mScrolledY != 0)) {
                     mReAnim = true;
                 }
@@ -343,11 +311,11 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         if (theParent == root) {
             rect.offset(descendant.getLeft() - descendant.getScrollX(),
                     descendant.getTop() - descendant.getScrollY());
-        } 
-        
+        }
+
         rect.right = rect.left + srcDescendant.getMeasuredWidth();
         rect.bottom = rect.top + srcDescendant.getMeasuredHeight();
-        
+
         return rect;
     }
 
@@ -358,41 +326,53 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     @Override
     public void onFocus(@NonNull View focusView, @Nullable FocusBorder.Options options) {
         View oldFocus = getOldFocusView();
-        if(null != oldFocus) {
+        if (null != oldFocus) {
             runFocusScaleAnimation(oldFocus, 1f, 1f);
             mOldFocusView.clear();
         }
-        
-        if(options instanceof Options) {
+
+        if (null == options) {
+            options = OptionsFactory.get();
+        }
+
+        if (options instanceof Options) {
             restoreFocusBorder(oldFocus, focusView, (Options) options);
             setVisible(true);
             runFocusAnimation(focusView, (Options) options);
             mOldFocusView = new WeakReference<>(focusView);
         }
     }
-    
+
+    /**
+     * 复原焦点框，在oldFocus为空时则认为当前焦点框是第一次或者再次显示出来了，
+     * 所以需要将焦点框的位置和大小直接跟焦点view保持一致。
+     *
+     * @param oldFocus
+     * @param newFocus
+     * @param options
+     */
     private void restoreFocusBorder(@Nullable View oldFocus, @NonNull View newFocus, @Nullable Options options) {
-        if(null == oldFocus) {
+        if (null == oldFocus) {
             final float paddingWidth = mPaddingRectF.left + mPaddingRectF.right + mBuilder.mPaddingOffsetRectF.left + mBuilder.mPaddingOffsetRectF.right;
             final float paddingHeight = mPaddingRectF.top + mPaddingRectF.bottom + mBuilder.mPaddingOffsetRectF.top + mBuilder.mPaddingOffsetRectF.bottom;
             final Rect toRect = findLocationWithView(newFocus);
-            toRect.inset((int)(-paddingWidth/2), (int)(-paddingHeight/2));
+            toRect.inset((int) (-paddingWidth / 2), (int) (-paddingHeight / 2));
             setWidth(toRect.width());
             setHeight(toRect.height());
             setTranslationX(toRect.left);
             setTranslationY(toRect.top);
         }
     }
-    
+
     @Override
     public void boundGlobalFocusListener(@NonNull OnFocusCallback callback) {
         mOnFocusCallback = callback;
         getViewTreeObserver().addOnGlobalFocusChangeListener(this);
     }
-    
+
     @Override
     public void unBoundGlobalFocusListener() {
-        if(null != mOnFocusCallback) {
+        if (null != mOnFocusCallback) {
             mOnFocusCallback = null;
             getViewTreeObserver().removeOnGlobalFocusChangeListener(this);
         }
@@ -401,7 +381,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     @Override
     public void onGlobalFocusChanged(View oldFocus, View newFocus) {
         final Options options = null != mOnFocusCallback ? (Options) mOnFocusCallback.onFocus(oldFocus, newFocus) : null;
-        if(null != options) {
+        if (null != options) {
             onFocus(newFocus, options);
         }
     }
@@ -409,185 +389,132 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     private void runFocusAnimation(View focusView, Options options) {
         mScaleX = options.scaleX;
         mScaleY = options.scaleY;
-        // 焦点缩放动画
-        runFocusScaleAnimation(focusView, mScaleX, mScaleY);
-        // 边框的动画
-        runBorderAnimation(focusView, options);
-    }
-    
-    protected void runBorderAnimation(View focusView, Options options) {
-        if(null == focusView) {
-            return;
-        }
-        if(null != mAnimatorSet) {
-            mAnimatorSet.cancel();
-        }
 
         getBorderView().setAlpha(1f);
         mTitleView.setAlpha(0);
         mTitleView.setText(options.title);
         mTitleView.setTranslationY(mTitleView.getHeight());
-        createBorderAnimation(focusView, options);
 
+        // 边框的动画
+        runBorderAnimation(focusView, options, false);
+    }
+
+    protected void runBorderAnimation(View focusView, Options options, boolean isReAnim) {
+        if (null == focusView) {
+            return;
+        }
+        if (null != mAnimatorSet) {
+            mAnimatorSet.cancel();
+        }
+        mAnimatorSet = createBorderAnimation(focusView, options, isReAnim);
         mAnimatorSet.start();
     }
 
     /**
      * 焦点VIEW缩放动画
+     *
      * @param oldOrNewFocusView
-     * @param 
+     * @param
      */
     protected void runFocusScaleAnimation(@Nullable final View oldOrNewFocusView, final float scaleX, final float scaleY) {
-        if(null == oldOrNewFocusView) {
+        if (null == oldOrNewFocusView) {
             return;
         }
         oldOrNewFocusView.animate().scaleX(scaleX).scaleY(scaleY).setDuration(mBuilder.mAnimDuration).start();
     }
 
-    protected void createBorderAnimation(View focusView, Options options) {
-        final float paddingWidth = mPaddingRectF.left + mPaddingRectF.right + mBuilder.mPaddingOffsetRectF.left + mBuilder.mPaddingOffsetRectF.right;
-        final float paddingHeight = mPaddingRectF.top + mPaddingRectF.bottom + mBuilder.mPaddingOffsetRectF.top + mBuilder.mPaddingOffsetRectF.bottom;
-        final int offsetWidth = (int) (focusView.getMeasuredWidth() * (options.scaleX - 1f) + paddingWidth);
-        final int offsetHeight = (int) (focusView.getMeasuredHeight() * (options.scaleY - 1f) + paddingHeight);
-    
+    protected AnimatorSet createBorderAnimation(View focusView, Options options, boolean isReAnim) {
+        final int paddingWidth = (int) (mPaddingRectF.left + mPaddingRectF.right + mBuilder.mPaddingOffsetRectF.left + mBuilder.mPaddingOffsetRectF.right);
+        final int paddingHeight = (int) (mPaddingRectF.top + mPaddingRectF.bottom + mBuilder.mPaddingOffsetRectF.top + mBuilder.mPaddingOffsetRectF.bottom);
+        final int offsetWidth = (int) (focusView.getMeasuredWidth() * (options.scaleX - 1f));
+        final int offsetHeight = (int) (focusView.getMeasuredHeight() * (options.scaleY - 1f));
+
         final Rect fromRect = findLocationWithView(this);
         final Rect toRect = findLocationWithView(focusView);
-        toRect.inset(-offsetWidth/2, -offsetHeight/2);
-        
-        final int newWidth = toRect.width();
-        final int newHeight = toRect.height();
-        final int newX = toRect.left - fromRect.left;
-        final int newY = toRect.top - fromRect.top;
-        
+        toRect.inset(-paddingWidth / 2, -paddingHeight / 2);
+
+        int newWidth = toRect.width();
+        int newHeight = toRect.height();
+        int newX = toRect.left - fromRect.left;
+        int newY = toRect.top - fromRect.top;
+
         final List<Animator> together = new ArrayList<>();
+        final List<Animator> sequentially = new ArrayList<>();
+
+        if (mBuilder.mAnimMode == Mode.TOGETHER) {
+            toRect.inset(-offsetWidth / 2, -offsetHeight / 2);
+            newWidth = toRect.width();
+            newHeight = toRect.height();
+            newX = toRect.left - fromRect.left;
+            newY = toRect.top - fromRect.top;
+
+            together.add(mAnimatorHelper.getBorderAnimatorWithScale(focusView, options, newX, newY, newWidth, newHeight, mBuilder.mAnimDuration, 0));
+
+        } else if (mBuilder.mAnimMode == Mode.SEQUENTIALLY) {
+            if(!isReAnim) {
+                AnimatorSet anim = mAnimatorHelper.getBorderAnimator(newX, newY, newWidth, newHeight, mBuilder.mAnimDuration / 2);
+                anim.setInterpolator(new DecelerateInterpolator());
+                together.add(anim);
+            }
+
+            toRect.inset(-offsetWidth / 2, -offsetHeight / 2);
+            newWidth = toRect.width();
+            newHeight = toRect.height();
+            newX = toRect.left - fromRect.left;
+            newY = toRect.top - fromRect.top;
+
+            if(!isReAnim) {
+                sequentially.add(mAnimatorHelper.getBorderAnimatorWithScale(focusView, options, newX, newY, newWidth, newHeight, mBuilder.mAnimDuration / 2, 200));
+            } else {
+                together.add(mAnimatorHelper.getBorderAnimatorWithScale(focusView, options, newX, newY, newWidth, newHeight, mBuilder.mAnimDuration / 2, 0));
+            }
+        } else {
+            if(!isReAnim) {
+                setTranslationX(newX);
+                setTranslationY(newY);
+                setWidth(newWidth);
+                setHeight(newHeight);
+            }
+
+            if (options.isScale()) {
+                toRect.inset(-offsetWidth / 2, -offsetHeight / 2);
+                newWidth = toRect.width();
+                newHeight = toRect.height();
+                newX = toRect.left - fromRect.left;
+                newY = toRect.top - fromRect.top;
+
+                together.add(mAnimatorHelper.getBorderAnimatorWithScale(focusView, options, newX, newY, newWidth, newHeight, mBuilder.mAnimDuration, 0));
+            }
+        }
+
         final List<Animator> appendTogether = getTogetherAnimators(newX, newY, newWidth, newHeight, options);
-
-        together.add(getTranslationXAnimator(newX));
-        together.add(getTranslationYAnimator(newY));
-        together.add(getWidthAnimator(newWidth));
-        together.add(getHeightAnimator(newHeight));
-
-        if(null != appendTogether && !appendTogether.isEmpty()) {
+        if (null != appendTogether && !appendTogether.isEmpty()) {
             together.addAll(appendTogether);
         }
 
-        final List<Animator> sequentially = new ArrayList<>();
         final List<Animator> appendSequentially = getSequentiallyAnimators(newX, newY, newWidth, newHeight, options);
 
-        sequentially.add(getShimmerAndTitleAnimator(options));
+        if(isReAnim) {
+            together.add(mAnimatorHelper.getShimmerAndTitleAnimator(options, isReAnim));
+        } else {
+            sequentially.add(mAnimatorHelper.getShimmerAndTitleAnimator(options, isReAnim));
+        }
 
-        if(null != appendSequentially && !appendSequentially.isEmpty()) {
+        if (null != appendSequentially && !appendSequentially.isEmpty()) {
             sequentially.addAll(appendSequentially);
         }
-        if(mBuilder.mRunBreathingAnim) {
-            sequentially.add(getBreathingLampAnimator());
+        if (mBuilder.mRunBreathingAnim) {
+            sequentially.add(mAnimatorHelper.getBreathingLampAnimator());
         }
 
         mAnimatorSet = new AnimatorSet();
         mAnimatorSet.setInterpolator(new DecelerateInterpolator(1));
         mAnimatorSet.playTogether(together);
         mAnimatorSet.playSequentially(sequentially);
-    }
+        //增加延迟是为了让view重新布局（宽高等）
+        mAnimatorSet.setStartDelay(50);
 
-    private Animator getShimmerAndTitleAnimator(Options options) {
-        AnimatorSet set = new AnimatorSet();
-        if(!TextUtils.isEmpty(mTitleView.getText())) {
-            if (null == mTitleTranslationYAnimator) {
-                mTitleTranslationYAnimator = ObjectAnimator.ofFloat(mTitleView, "translationY", mTitleView.getHeight(), 0f).setDuration(mBuilder.mTitleAnimDuration);
-            } else {
-                mTitleTranslationYAnimator.setFloatValues(mTitleView.getHeight(), 0f);
-            }
-            if (null == mTitleAlphaAnimator) {
-                mTitleAlphaAnimator = ObjectAnimator.ofFloat(mTitleView, "alpha", 0f, 1f).setDuration(mBuilder.mTitleAnimDuration);
-            }
-            set.playTogether(mTitleTranslationYAnimator, mTitleAlphaAnimator);
-        }
-        if(mBuilder.mRunShimmerAnim) {
-            set.playTogether(getShimmerAnimator());
-        }
-        set.setStartDelay(400);
-        return set;
-    }
-    
-    private ObjectAnimator getTranslationXAnimator(float x) {
-        if(null == mTranslationXAnimator) {
-            mTranslationXAnimator = ObjectAnimator.ofFloat(this, "translationX", x)
-                    .setDuration(mBuilder.mAnimDuration);
-        } else {
-            mTranslationXAnimator.setFloatValues(x);
-        }
-        return mTranslationXAnimator;
-    }
-
-    private ObjectAnimator getTranslationYAnimator(float y) {
-        if(null == mTranslationYAnimator) {
-            mTranslationYAnimator = ObjectAnimator.ofFloat(this, "translationY", y)
-                    .setDuration(mBuilder.mAnimDuration);
-        } else {
-            mTranslationYAnimator.setFloatValues(y);
-        }
-        return mTranslationYAnimator;
-    }
-
-    private ObjectAnimator getHeightAnimator(int height) {
-        if(null == mHeightAnimator) {
-            mHeightAnimator = ObjectAnimator.ofInt(this, "height", getMeasuredHeight(), height)
-                    .setDuration(mBuilder.mAnimDuration);
-        } else {
-            mHeightAnimator.setIntValues(getMeasuredHeight(), height);
-        }
-        return mHeightAnimator;
-    }
-    
-    private ObjectAnimator getWidthAnimator(int width) {
-        if(null == mWidthAnimator) {
-            mWidthAnimator = ObjectAnimator.ofInt(this, "width", getMeasuredWidth(), width)
-                    .setDuration(mBuilder.mAnimDuration);
-        } else {
-            mWidthAnimator.setIntValues(getMeasuredWidth(), width);
-        }
-        return mWidthAnimator;
-    }
-    
-    /**
-     * 闪光动画
-     * @return Animator
-     */
-    private ObjectAnimator getShimmerAnimator() {
-        if(null == mShimmerAnimator) {
-            mShimmerAnimator = ObjectAnimator.ofFloat(this, "shimmerTranslate", -1f, 1f);
-            mShimmerAnimator.setInterpolator(new LinearInterpolator());
-            mShimmerAnimator.setDuration(mBuilder.mShimmerDuration);
-            mShimmerAnimator.setStartDelay(400);
-            mShimmerAnimator.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationStart(Animator animation) {
-                    setShimmerAnimating(true);
-                }
-
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    setShimmerAnimating(false);
-                }
-            });
-        }
-        return mShimmerAnimator;
-    }
-    
-    /**
-     * 呼吸灯动画
-     * @return Animator
-     */
-    private ObjectAnimator getBreathingLampAnimator() {
-        if(null == mBreathingLampAnimator) {
-            mBreathingLampAnimator = ObjectAnimator
-                    .ofFloat(getBorderView(), "alpha", 1f, 0.22f, 1f);
-            mBreathingLampAnimator.setDuration(mBuilder.mBreathingDuration);
-            mBreathingLampAnimator.setStartDelay(400);
-            mBreathingLampAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-            mBreathingLampAnimator.setRepeatCount(ValueAnimator.INFINITE);
-        }
-        return mBreathingLampAnimator;
+        return mAnimatorSet;
     }
 
     @NonNull
@@ -603,7 +530,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         private WeakReference<AbsFocusBorder> mFocusBorder;
         private int mScrolledX = 0, mScrolledY = 0;
 
-        public RecyclerViewScrollListener(AbsFocusBorder border){
+        public RecyclerViewScrollListener(AbsFocusBorder border) {
             mFocusBorder = new WeakReference<>(border);
         }
 
@@ -615,20 +542,20 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
 
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-            if(newState == RecyclerView.SCROLL_STATE_IDLE) {
+            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                 final AbsFocusBorder border = mFocusBorder.get();
                 final View focused = recyclerView.getFocusedChild();
-                if(null != border && null != focused) {
+                if (null != border && null != focused) {
                     if (border.mReAnim || mScrolledX != 0 || mScrolledY != 0) {
-                        border.runBorderAnimation(focused, Options.get(border.mScaleX, border.mScaleY));
+                        border.runBorderAnimation(focused, Options.get(border.mScaleX, border.mScaleY), true);
                     }
                 }
                 mScrolledX = mScrolledY = 0;
             }
         }
     }
-    
-    public static class Options extends FocusBorder.Options{
+
+    public static class Options extends FocusBorder.Options {
         protected float scaleX = 1f, scaleY = 1f;
         protected String title;
 
@@ -638,7 +565,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         private static class OptionsHolder {
             private static final Options INSTANCE = new Options();
         }
-        
+
         public static Options get(float scaleX, float scaleY) {
             return get(scaleX, scaleY, null);
         }
@@ -649,16 +576,23 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             OptionsHolder.INSTANCE.title = title;
             return OptionsHolder.INSTANCE;
         }
-        
+
         public boolean isScale() {
             return scaleX != 1f || scaleY != 1f;
         }
     }
-    
+
+    public static enum Mode {
+        TOGETHER,
+        SEQUENTIALLY,
+        NOLL
+    }
+
     public static abstract class Builder {
         protected int mShimmerColor = 0x66FFFFFF;
         protected boolean mRunShimmerAnim = true;
         protected boolean mRunBreathingAnim = true;
+        protected Mode mAnimMode = Mode.TOGETHER;
         protected long mAnimDuration = AbsFocusBorder.DEFAULT_ANIM_DURATION_TIME;
         protected long mShimmerDuration = AbsFocusBorder.DEFAULT_SHIMMER_DURATION_TIME;
         protected long mBreathingDuration = AbsFocusBorder.DEFAULT_BREATHING_DURATION_TIME;
@@ -669,6 +603,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         protected boolean mTitleMarginBottomAutoAlignBorder;
         protected float mTitleTextSize = 20;
         protected int mTitleTextColor = 0x66FFFFFF;
+        protected int mTitleWidth = ViewGroup.LayoutParams.WRAP_CONTENT;
         protected int mTitleBackgroundRes;
         protected long mTitleAnimDuration = AbsFocusBorder.DEFAULT_TITLE_ANIM_DURATION_TIME;
 
@@ -692,6 +627,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
 
         /**
          * 标题自动对齐焦点框底部
+         *
          * @return
          */
         public Builder titleMarginBottomAutoAlignBorder() {
@@ -718,6 +654,11 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             return this;
         }
 
+        public Builder titleWidth(int width) {
+            this.mTitleWidth = width;
+            return this;
+        }
+
         public Builder titleBackgroundRes(@DrawableRes int drawableRes) {
             this.mTitleBackgroundRes = drawableRes;
             return this;
@@ -728,12 +669,11 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             return this;
         }
 
-        
         public Builder breathingDuration(long duration) {
             this.mBreathingDuration = duration;
             return this;
         }
-        
+
         public Builder noBreathing() {
             this.mRunBreathingAnim = false;
             return this;
@@ -752,7 +692,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             }
             return this;
         }
-        
+
         public Builder shimmerDuration(long duration) {
             this.mShimmerDuration = duration;
             return this;
@@ -762,16 +702,21 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             this.mRunShimmerAnim = false;
             return this;
         }
-        
+
         public Builder animDuration(long duration) {
             this.mAnimDuration = duration;
             return this;
         }
-        
+
+        public Builder animMode(Mode mode) {
+            this.mAnimMode = mode;
+            return this;
+        }
+
         public Builder padding(float padding) {
             return padding(padding, padding, padding, padding);
         }
-        
+
         public Builder padding(float left, float top, float right, float bottom) {
             this.mPaddingOffsetRectF.left = left;
             this.mPaddingOffsetRectF.top = top;
@@ -779,23 +724,23 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             this.mPaddingOffsetRectF.bottom = bottom;
             return this;
         }
-        
+
         public FocusBorder build(android.app.Fragment fragment) {
-            if(null != fragment.getActivity()) {
+            if (null != fragment.getActivity()) {
                 return build(fragment.getActivity());
             }
             return build((ViewGroup) fragment.getView());
         }
-        
+
         public FocusBorder build(android.support.v4.app.Fragment fragment) {
-            if(null != fragment.getActivity()) {
+            if (null != fragment.getActivity()) {
                 return build(fragment.getActivity());
             }
             return build((ViewGroup) fragment.getView());
         }
 
         public abstract FocusBorder build(Activity activity);
-        
+
         public abstract FocusBorder build(ViewGroup viewGroup);
     }
 }

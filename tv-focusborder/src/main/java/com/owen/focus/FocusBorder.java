@@ -38,19 +38,23 @@ public interface FocusBorder {
     
     class OptionsFactory {
         public static Options get() {
-            return AbsFocusBorder.Options.get(1f, 1f);
+            return get(1f, 1f);
         }
 
         public static Options get(float scaleX, float scaleY) {
             return get(scaleX, scaleY, null);
+        }
+
+        public static Options get(float scaleX, float scaleY, String title) {
+            return AbsFocusBorder.Options.get(scaleX, scaleY, title);
         }
         
         public static Options get(float scaleX, float scaleY, float roundRadius) {
             return ColorFocusBorder.Options.get(scaleX, scaleY, roundRadius);
         }
 
-        public static Options get(float scaleX, float scaleY, String title) {
-            return AbsFocusBorder.Options.get(scaleX, scaleY, title);
+        public static Options get(float scaleX, float scaleY, float roundRadius, String title) {
+            return ColorFocusBorder.Options.get(scaleX, scaleY, roundRadius, title);
         }
     }
 }

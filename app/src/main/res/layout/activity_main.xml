@@ -118,89 +118,18 @@
 
     </com.owen.widget.TvHorizontalScrollView>
 
-    <com.owen.widget.TvHorizontalScrollView
-        app:hsv_selected_offset_end="30dp"
-        app:hsv_selected_offset_start="30dp"
+    <com.owen.tvrecyclerview.widget.TvRecyclerView
+        android:id="@+id/list"
         app:layout_constraintTop_toBottomOf="@id/scroll_view_1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_width="match_parent"
-        android:layout_height="0dp">
-
-        <LinearLayout
-            android:id="@+id/layout_2"
-            android:padding="30dp"
-            android:clipToPadding="false"
-            android:clipChildren="false"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <com.owen.widget.RoundFrameLayout
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="180dp"
-                android:background="#ed3"/>
-
-            <com.owen.widget.RoundFrameLayout
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="280dp"
-                android:background="#ed3"/>
-
-            <com.owen.widget.RoundFrameLayout
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="180dp"
-                android:background="#ed3"/>
-
-            <com.owen.widget.RoundFrameLayout
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="280dp"
-                android:background="#ed3"/>
-
-            <com.owen.widget.RoundFrameLayout
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="180dp"
-                android:background="#ed3"/>
-
-            <com.owen.widget.RoundFrameLayout
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="280dp"
-                android:background="#ed3"/>
-
-            <com.owen.widget.RoundFrameLayout
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="180dp"
-                android:background="#ed3"/>
-
-            <com.owen.widget.RoundFrameLayout
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="280dp"
-                android:background="#ed3"/>
-
-            <com.owen.widget.RoundFrameLayout
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:layout_width="180dp"
-                android:layout_height="180dp"
-                android:background="#ed3"/>
-
-        </LinearLayout>
-
-    </com.owen.widget.TvHorizontalScrollView>
+        android:layout_height="0dp"
+        android:padding="30dp"
+        android:orientation="horizontal"
+        app:tv_layoutManager="V7LinearLayoutManager"
+        tools:listitem="@layout/item_list"
+        />
 
 </android.support.constraint.ConstraintLayout>

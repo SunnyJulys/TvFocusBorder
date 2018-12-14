@@ -1,27 +1,42 @@
 package com.owen.focus.example;
 
 import android.graphics.Color;
+import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.owen.adapter.CommonRecyclerViewAdapter;
+import com.owen.adapter.CommonRecyclerViewHolder;
+import com.owen.focus.AbsFocusBorder;
 import com.owen.focus.FocusBorder;
+import com.owen.tvrecyclerview.widget.SimpleOnItemListener;
+import com.owen.tvrecyclerview.widget.TvRecyclerView;
 
 /**
  * @author ZhouSuQiang
  */
-public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
+public class MainActivity extends AppCompatActivity {
     /** 颜色焦点框 */
     private FocusBorder mColorFocusBorder;
     /** 图片焦点框 */
     private FocusBorder mDrawableFocusBorder;
+
+    private TvRecyclerView mTvRecyclerView;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mTvRecyclerView = findViewById(R.id.list);
+        mTvRecyclerView.setSpacingWithMargins((int) dp2px(10), (int) dp2px(10));
+        initListDatas();
         
         initBorder();
     }
@@ -51,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 //                .noBreathing()
                 //呼吸灯效果时长
                 .breathingDuration(3000)
+                //边框动画模式
+                .animMode(AbsFocusBorder.Mode.TOGETHER)
                 .build(this);
         
         //焦点监听 方式一:绑定整个页面的焦点监听事件
@@ -89,22 +106,25 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         /** 图片焦点框 */
         mDrawableFocusBorder = new FocusBorder.Builder().asDrawable()
                 .borderDrawableRes(R.mipmap.focus)
+                //标题相关配置
                 .titleBackgroundRes(R.drawable.shape_item_title_bg)
                 .titleMarginBottomAutoAlignBorder()
                 .titleMargin(10, 0, 10, 4)
 //                .titlePadding(10)
+                .titleWidth(ViewGroup.LayoutParams.MATCH_PARENT)
                 .titleTextColor(Color.LTGRAY)
                 .titleTextSize(24)
+                //边框动画模式
+                .animMode(AbsFocusBorder.Mode.SEQUENTIALLY)
                 .build(this);
     
-        //焦点监听 方式一:绑定整个页面的焦点监听事件
-        ViewGroup layout2 = findViewById(R.id.layout_2);
-        for (int i = 0; i < layout2.getChildCount(); i++) {
-            View view = layout2.getChildAt(i);
-            if(null != view) {
-                view.setOnFocusChangeListener(this);
+        //焦点监听 方式二:绑定单独控件的焦点监听事件
+        mTvRecyclerView.setOnItemListener(new SimpleOnItemListener() {
+            @Override
+            public void onItemSelected(TvRecyclerView parent, View itemView, int position) {
+                mDrawableFocusBorder.onFocus(itemView, FocusBorder.OptionsFactory.get(1.2f, 1.2f, "标题文本 " + position));
             }
-        }
+        });
     }
     
     private FocusBorder.Options createColorBorderOptions(int radius) {
@@ -113,16 +133,33 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         return FocusBorder.OptionsFactory.get(scale, scale, dp2px(radius) * scale);
     }
     
-    @Override
-    public void onFocusChange(View v, boolean hasFocus) {
-        if(hasFocus) {
-            mDrawableFocusBorder.onFocus(v, FocusBorder.OptionsFactory.get(1.2f, 1.2f, "测试标题哈哈哈"));
-        }
-    }
-    
     private float dp2px(int dp) {
         return TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
-    
+
+
+    private void initListDatas() {
+        mTvRecyclerView.setAdapter(new CommonRecyclerViewAdapter(getApplicationContext()) {
+            @Override
+            public int getItemCount() {
+                return 30;
+            }
+
+            @Override
+            public int getItemViewType(int position) {
+                return position % 2 == 0 ? 0 : 1;
+            }
+
+            @Override
+            public int getItemLayoutId(int viewType) {
+                return viewType == 0 ? R.layout.item_list : R.layout.item_list2;
+            }
+
+            @Override
+            public void onBindItemHolder(CommonRecyclerViewHolder helper, Object item, int position) {
+            }
+
+        });
+    }
 }
