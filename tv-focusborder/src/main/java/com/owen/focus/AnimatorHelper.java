@@ -29,13 +29,19 @@ class AnimatorHelper {
 
 
     private AnimatorSet getAnimatorSet(Object tag) {
-        AnimatorSet anim;
-        if(!mCache.containsKey(tag)) {
+        /**
+         * 无法复用是因为Android低版本不兼容（api22测试无法兼容复用，其它版本未测试）
+         * */
+        AnimatorSet anim = new AnimatorSet();
+        /*if(!mCache.containsKey(tag)) {
             anim = new AnimatorSet();
             mCache.put(tag, anim);
         } else {
             anim = (AnimatorSet) mCache.get(tag);
-        }
+            if(null != anim) {
+                anim.end();
+            }
+        }*/
         return anim;
     }
 
@@ -78,7 +84,7 @@ class AnimatorHelper {
     }
 
     /**
-     * 整个边框布局的位置和宽高动画(用于Mode.SEQUENTIALLY模式)
+     * 整个边框布局的位置和宽高动画,以及焦点View的缩放动画
      *
      * @param focusView
      * @param options
@@ -91,7 +97,6 @@ class AnimatorHelper {
      */
     AnimatorSet getBorderAnimatorWithScale(View focusView, AbsFocusBorder.Options options, float x, float y, int width, int height, long duration, long startDelay) {
         AnimatorSet set = getAnimatorSet("BorderAnimator2");
-        set.end();
         set.playTogether(
                 ofFloat("mTranslationXAnimator2", mFocusBorder, "translationX", x),
                 ofFloat("mTranslationYAnimator2", mFocusBorder, "translationY", y),
@@ -106,7 +111,7 @@ class AnimatorHelper {
     }
 
     /**
-     * 整个边框布局的位置和宽高动画
+     * 整个边框布局的位置和宽高动画(用于Mode.SEQUENTIALLY模式)
      *
      * @param x
      * @param y
@@ -117,7 +122,6 @@ class AnimatorHelper {
      */
     AnimatorSet getBorderAnimator(float x, float y, int width, int height, long duration) {
         AnimatorSet set = getAnimatorSet("BorderAnimator");
-        set.end();
         set.playTogether(
                 ofFloat("mTranslationXAnimator", mFocusBorder, "translationX", x),
                 ofFloat("mTranslationYAnimator", mFocusBorder, "translationY", y),
@@ -136,7 +140,6 @@ class AnimatorHelper {
      */
     Animator getShimmerAndTitleAnimator(AbsFocusBorder.Options options, boolean isReAnim) {
         AnimatorSet set = getAnimatorSet("ShimmerAndTitleAnimator");
-        set.end();
         if (!TextUtils.isEmpty(mFocusBorder.mTitleView.getText())) {
             ObjectAnimator mTitleTranslationYAnimator = ofFloat("TitleTranslationYAnimator", mFocusBorder.mTitleView, "translationY",  mFocusBorder.mTitleView.getTranslationY(), 0f)
                     .setDuration(mFocusBorder.mBuilder.mTitleAnimDuration / (isReAnim ? 2 : 1));

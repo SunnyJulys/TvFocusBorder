@@ -30,7 +30,7 @@ publish {
     userOrg = 'zhousuqiang'
     groupId = 'com.owen'
     artifactId = 'tv-focusborder'
-    publishVersion = '1.0.4'
+    publishVersion = '1.0.5'
     desc = 'TvFocusBorder is android tv focus border'
     website = 'https://github.com/zhousuqiang/TvFocusBorder'
 }

@@ -492,14 +492,13 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             together.addAll(appendTogether);
         }
 
-        final List<Animator> appendSequentially = getSequentiallyAnimators(newX, newY, newWidth, newHeight, options);
-
         if(isReAnim) {
             together.add(mAnimatorHelper.getShimmerAndTitleAnimator(options, isReAnim));
         } else {
             sequentially.add(mAnimatorHelper.getShimmerAndTitleAnimator(options, isReAnim));
         }
 
+        final List<Animator> appendSequentially = getSequentiallyAnimators(newX, newY, newWidth, newHeight, options);
         if (null != appendSequentially && !appendSequentially.isEmpty()) {
             sequentially.addAll(appendSequentially);
         }
@@ -545,7 +544,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                 final AbsFocusBorder border = mFocusBorder.get();
                 final View focused = recyclerView.getFocusedChild();
-                if (null != border && null != focused) {
+                if (null != border && null != focused && !(focused instanceof RecyclerView)) {
                     if (border.mReAnim || mScrolledX != 0 || mScrolledY != 0) {
                         border.runBorderAnimation(focused, Options.get(border.mScaleX, border.mScaleY), true);
                     }
