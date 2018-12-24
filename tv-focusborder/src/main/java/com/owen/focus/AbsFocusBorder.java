@@ -278,8 +278,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         final View srcDescendant = descendant;
 
         ViewParent theParent = descendant.getParent();
-        Object tag;
-        Point point;
+        Point point = null;
 
         // search and offset up to the parent
         while (theParent instanceof View && theParent != root) {
@@ -288,10 +287,10 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
                     descendant.getTop() - descendant.getScrollY());
 
             //兼容TvRecyclerView
-            if (theParent instanceof RecyclerView) {
+            if (theParent instanceof RecyclerView && point == null) {
                 final RecyclerView rv = (RecyclerView) theParent;
                 registerScrollListener(rv);
-                tag = rv.getTag();
+                Object tag = rv.getTag();
                 if (tag instanceof Point) {
                     point = (Point) tag;
                     rect.offset(-point.x, -point.y);
