@@ -125,12 +125,13 @@ public class ColorFocusBorder extends AbsFocusBorder {
         if(mShadowWidth > 0) {
             canvas.save();
             //裁剪处理(使阴影矩形框内变为透明)
-            if (mRoundRadius > 0) {
+            //android api 19 如条件不成立时中间会绘制成不透明，所以暂时注释掉
+//            if (mRoundRadius > 0) {
                 canvas.clipRect(0, 0, getWidth(), getHeight());
                 mTempRectF.set(mFrameRectF);
                 mTempRectF.inset(mRoundRadius / 2f, mRoundRadius / 2f);
                 canvas.clipRect(mTempRectF, Region.Op.DIFFERENCE);
-            }
+//            }
             //绘制外发光阴影效果
             canvas.drawRoundRect(mFrameRectF, mRoundRadius, mRoundRadius, mShadowPaint);
             canvas.restore();
