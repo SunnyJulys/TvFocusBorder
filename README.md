@@ -1,7 +1,5 @@
 # 欢迎使用Android TV端焦点框框架 TvFocusBorder [ ![Download](https://api.bintray.com/packages/zhousuqiang/maven/tv-focusborder/images/download.svg) ](https://bintray.com/zhousuqiang/maven/tv-focusborder/_latestVersion)
 
-群   号：484790001 [群二维码](https://github.com/zhousuqiang/TvRecyclerView/blob/master/images/qq.png)
-
 >* 支持[TvRecyclerView](https://github.com/zhousuqiang/TvRecyclerView)焦点移动;
 >* 支持颜色或图片作为焦点框;
 >* 支持焦点框圆角变化;
@@ -94,6 +92,10 @@ view.setOnFocusChangeListener(new View.OnFocusChangeListener() {
 ### 更详细的使用请见exmaple
 
 ------
+
+扣 扣 群：484790001（注：加群时请写明来源及目的）
+
+![](https://github.com/zhousuqiang/TvRecyclerView/blob/master/images/qq.png)
 
 TvRecyclerView框架[TvRecyclerView](https://github.com/zhousuqiang/TvRecyclerView)
 
