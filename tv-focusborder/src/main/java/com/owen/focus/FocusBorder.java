@@ -12,6 +12,8 @@ public interface FocusBorder {
 
     void setVisible(boolean visible);
 
+    void setVisible(boolean visible, boolean anim);
+
     boolean isVisible();
 
     void onFocus(@NonNull View focusView, @Nullable Options options);

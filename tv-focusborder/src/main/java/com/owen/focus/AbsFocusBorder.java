@@ -19,6 +19,7 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.GridLayout;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
@@ -222,6 +223,11 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
 
     @Override
     public void setVisible(boolean visible) {
+        setVisible(visible, true);
+    }
+
+    @Override
+    public void setVisible(boolean visible, boolean anim) {
         if (mIsVisible != visible) {
             mIsVisible = visible;
 
@@ -229,7 +235,11 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
                 mAnimatorSet.cancel();
             }
 
-            animate().alpha(visible ? 1f : 0f).setDuration(mBuilder.mAnimDuration).start();
+            if(anim) {
+                animate().alpha(visible ? 1f : 0f).setDuration(mBuilder.mAnimDuration).start();
+            } else {
+                setAlpha(visible ? 1f : 0f);
+            }
 
             if (!visible && null != mOldFocusView && null != mOldFocusView.get()) {
                 runFocusScaleAnimation(mOldFocusView.get(), 1f, 1f);
@@ -279,6 +289,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
 
         ViewParent theParent = descendant.getParent();
         Point point = null;
+        Point gridPoint = null;
 
         // search and offset up to the parent
         while (theParent instanceof View && theParent != root) {
@@ -298,6 +309,16 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
                 if (null == tag && rv.getScrollState() != RecyclerView.SCROLL_STATE_IDLE
                         && (mRecyclerViewScrollListener.mScrolledX != 0 || mRecyclerViewScrollListener.mScrolledY != 0)) {
                     mReAnim = true;
+                }
+            }
+
+            //兼容TvGridLayout
+            if(theParent instanceof GridLayout && gridPoint == null) {
+                Object tag = ((GridLayout) theParent).getTag();
+                if(tag instanceof Point) {
+                    gridPoint = (Point) tag;
+                    rect.offset(-gridPoint.x, -gridPoint.y);
+                    ((GridLayout) theParent).setTag(null);
                 }
             }
 
