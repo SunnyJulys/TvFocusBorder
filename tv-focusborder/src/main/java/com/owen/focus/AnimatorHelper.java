@@ -152,11 +152,11 @@ class AnimatorHelper {
         }
         if(!isReAnim) {
             if(mFocusBorder.mBuilder.mAnimMode == AbsFocusBorder.Mode.TOGETHER) {
-                set.setStartDelay(400);
-            } else if(mFocusBorder.mBuilder.mAnimMode == AbsFocusBorder.Mode.NOLL) {
                 set.setStartDelay(300);
-            } else {
+            } else if(mFocusBorder.mBuilder.mAnimMode == AbsFocusBorder.Mode.NOLL) {
                 set.setStartDelay(200);
+            } else {
+                set.setStartDelay(100);
             }
         }
         return set;

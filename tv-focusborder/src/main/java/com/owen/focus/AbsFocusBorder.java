@@ -84,6 +84,9 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         setVisibility(VISIBLE);
 
+        setClipChildren(false);
+        setClipToPadding(false);
+
         //绘制闪光相关
         mShimmerPaint = new Paint();
         mShimmerGradientMatrix = new Matrix();
@@ -414,6 +417,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         mTitleView.setAlpha(0);
         mTitleView.setText(options.title);
         mTitleView.setTranslationY(mTitleView.getHeight());
+        mTitleView.bringToFront();
 
         // 边框的动画
         runBorderAnimation(focusView, options, false);
@@ -601,7 +605,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         }
     }
 
-    public static enum Mode {
+    public enum Mode {
         TOGETHER,
         SEQUENTIALLY,
         NOLL

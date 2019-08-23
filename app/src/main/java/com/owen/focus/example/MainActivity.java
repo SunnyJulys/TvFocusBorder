@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 //边框颜色
                 .borderColor(Color.parseColor("#00FF00"))
                 //padding值
-                .padding(2f)
+                .padding(3.5f)
                 //动画时长
                 .animDuration(300)
                 //不要闪光效果动画
@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
                 //标题相关配置
                 .titleBackgroundRes(R.drawable.shape_item_title_bg)
                 .titleMarginBottomAutoAlignBorder()
-                .titleMargin(10, 0, 10, 4)
+                .titleMargin(10, 0, 10, -12)
 //                .titlePadding(10)
                 .titleWidth(ViewGroup.LayoutParams.MATCH_PARENT)
                 .titleTextColor(Color.LTGRAY)
