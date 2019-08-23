@@ -99,6 +99,10 @@ public class ColorFocusBorder extends AbsFocusBorder {
             List<Animator> animators = new ArrayList<>();
             animators.add(getRoundRadiusAnimator(rawOptions.roundRadius));
             return animators;
+        } else if(mRoundRadius != 0) {
+            List<Animator> animators = new ArrayList<>();
+            animators.add(getRoundRadiusAnimator(0));
+            return animators;
         }
         return null;
     }
@@ -177,10 +181,7 @@ public class ColorFocusBorder extends AbsFocusBorder {
         }
         
         public static Options get(float scaleX, float scaleY, float roundRadius) {
-            OptionsHolder.INSTANCE.scaleX = scaleX;
-            OptionsHolder.INSTANCE.scaleY = scaleY;
-            OptionsHolder.INSTANCE.roundRadius = roundRadius;
-            return OptionsHolder.INSTANCE;
+            return get(scaleX, scaleY, roundRadius, null);
         }
 
         public static Options get(float scaleX, float scaleY, float roundRadius, String title) {

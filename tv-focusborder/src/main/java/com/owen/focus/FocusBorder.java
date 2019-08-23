@@ -52,7 +52,7 @@ public interface FocusBorder {
         }
         
         public static Options get(float scaleX, float scaleY, float roundRadius) {
-            return ColorFocusBorder.Options.get(scaleX, scaleY, roundRadius);
+            return get(scaleX, scaleY, roundRadius, null);
         }
 
         public static Options get(float scaleX, float scaleY, float roundRadius, String title) {
