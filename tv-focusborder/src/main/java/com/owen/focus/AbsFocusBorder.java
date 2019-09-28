@@ -563,11 +563,19 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             mScrolledY = Math.abs(dy) == 1 ? 0 : dy;
         }
 
+        private View getFocused(RecyclerView recyclerView) {
+            View focused = recyclerView.getFocusedChild();
+            if (focused instanceof RecyclerView) {
+                return getFocused((RecyclerView) focused);
+            }
+            return focused;
+        }
+
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                 final AbsFocusBorder border = mFocusBorder.get();
-                final View focused = recyclerView.getFocusedChild();
+                final View focused = getFocused(recyclerView);
                 if (null != border && null != focused && !(focused instanceof RecyclerView)) {
                     if (border.mReAnim || mScrolledX != 0 || mScrolledY != 0) {
                         border.runBorderAnimation(focused, Options.get(border.mScaleX, border.mScaleY), true);
