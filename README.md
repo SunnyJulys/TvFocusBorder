@@ -10,7 +10,7 @@
 
 ### Gradle 引入
 ```java
-implementation 'com.owen:tv-focusborder:1.1.1'
+implementation 'com.owen:tv-focusborder:1.1.3'
 ```
 
 ### 使用

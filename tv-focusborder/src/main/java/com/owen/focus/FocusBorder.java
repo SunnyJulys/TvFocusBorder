@@ -16,6 +16,8 @@ public interface FocusBorder {
 
     boolean isVisible();
 
+    View getView();
+
     void onFocus(@NonNull View focusView, @Nullable Options options);
     
     void boundGlobalFocusListener(@NonNull OnFocusCallback callback);

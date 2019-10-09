@@ -27,6 +27,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.ViewPropertyAnimator;
 import android.view.ViewTreeObserver;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
@@ -230,6 +231,11 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     }
 
     @Override
+    public View getView() {
+        return this;
+    }
+
+    @Override
     public void setVisible(boolean visible, boolean anim) {
         if (mIsVisible != visible) {
             mIsVisible = visible;
@@ -238,13 +244,25 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
                 mAnimatorSet.cancel();
             }
 
+            boolean hasOldFocus = null != mOldFocusView && null != mOldFocusView.get();
+
             if(anim) {
-                animate().alpha(visible ? 1f : 0f).setDuration(mBuilder.mAnimDuration).start();
+                ViewPropertyAnimator animator = animate().alpha(visible ? 1f : 0f).setDuration(mBuilder.mAnimDuration);
+                if (!visible && hasOldFocus) {
+                    animator.scaleX(1f / mOldFocusView.get().getScaleX())
+                            .scaleY(1f / mOldFocusView.get().getScaleY());
+                } else {
+                    setScaleX(1f);
+                    setScaleY(1f);
+                }
+                animator.start();
             } else {
                 setAlpha(visible ? 1f : 0f);
+                setScaleX(1f);
+                setScaleY(1f);
             }
 
-            if (!visible && null != mOldFocusView && null != mOldFocusView.get()) {
+            if (!visible && hasOldFocus) {
                 runFocusScaleAnimation(mOldFocusView.get(), 1f, 1f);
                 mOldFocusView.clear();
                 mOldFocusView = null;
