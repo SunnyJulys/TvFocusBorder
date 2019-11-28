@@ -22,7 +22,6 @@ import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.GridLayout;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -448,6 +447,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
         if (null != mAnimatorSet) {
             mAnimatorSet.cancel();
         }
+        focusView.clearAnimation();
         mAnimatorSet = createBorderAnimation(focusView, options, isReAnim);
         mAnimatorSet.start();
     }
@@ -581,20 +581,20 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
             mScrolledY = Math.abs(dy) == 1 ? 0 : dy;
         }
 
-        private View getFocused(RecyclerView recyclerView) {
+        /*private View getFocused(RecyclerView recyclerView) {
             View focused = recyclerView.getFocusedChild();
             if (focused instanceof RecyclerView) {
                 return getFocused((RecyclerView) focused);
             }
             return focused;
-        }
+        }*/
 
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                 final AbsFocusBorder border = mFocusBorder.get();
-                final View focused = getFocused(recyclerView);
-                if (null != border && null != focused && !(focused instanceof RecyclerView)) {
+                final View focused = null != border ? border.getOldFocusView() : null;
+                if (null != focused && !(focused instanceof RecyclerView)) {
                     if (border.mReAnim || mScrolledX != 0 || mScrolledY != 0) {
                         border.runBorderAnimation(focused, Options.get(border.mScaleX, border.mScaleY), true);
                     }

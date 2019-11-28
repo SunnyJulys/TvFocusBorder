@@ -101,7 +101,7 @@ public class DrawableFocusBorder extends AbsFocusBorder {
             mBorderDrawable = null != mBorderDrawable ? mBorderDrawable :
                     Build.VERSION.SDK_INT >= 21 ? parent.getContext().getDrawable(mBorderResId)
                             : parent.getContext().getResources().getDrawable(mBorderResId);
-            final DrawableFocusBorder borderView = new DrawableFocusBorder(parent.getContext(), this);
+            final DrawableFocusBorder borderView = new DrawableFocusBorder(parent.getContext().getApplicationContext(), this);
             final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(1,1);
             parent.addView(borderView, lp);
             return borderView;

@@ -291,7 +291,7 @@ public class ColorFocusBorder extends AbsFocusBorder {
                 }
             }
             
-            final ColorFocusBorder borderView = new ColorFocusBorder(parent.getContext(), this);
+            final ColorFocusBorder borderView = new ColorFocusBorder(parent.getContext().getApplicationContext(), this);
             final ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(1,1);
             parent.addView(borderView, lp);
             return borderView;
