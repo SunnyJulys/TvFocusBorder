@@ -10,7 +10,7 @@ android {
         versionCode 1
         versionName "1.0"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
     }
 
@@ -30,13 +30,13 @@ publish {
     userOrg = 'zhousuqiang'
     groupId = 'com.owen'
     artifactId = 'tv-focusborder'
-    publishVersion = '1.1.4'
+    publishVersion = '2.0.0'
     desc = 'TvFocusBorder is android tv focus border'
     website = 'https://github.com/zhousuqiang/TvFocusBorder'
 }
 
 dependencies {
-    api "com.android.support:appcompat-v7:$rootProject.ext.supportVersion"
-    api "com.android.support:recyclerview-v7:$rootProject.ext.supportVersion"
-    api "com.android.support:gridlayout-v7:$supportVersion"
+    api "androidx.appcompat:appcompat:1.1.0"
+    api "androidx.recyclerview:recyclerview:1.1.0"
+    api "androidx.gridlayout:gridlayout:1.0.0"
 }

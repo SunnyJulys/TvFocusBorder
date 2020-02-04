@@ -1,15 +1,12 @@
 package com.owen.focus.example;
 
 import android.graphics.Color;
-import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.owen.adapter.CommonRecyclerViewAdapter;
 import com.owen.adapter.CommonRecyclerViewHolder;
