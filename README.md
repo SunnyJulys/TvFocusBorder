@@ -14,7 +14,7 @@
 implementation 'com.owen:tv-focusborder:1.1.4'
 
 //androidx版本
-implementation 'com.owen:tv-focusborder:2.0.0'
+implementation 'com.owen:tv-focusborder:2.0.1'
 ```
 
 ### 使用

@@ -71,8 +71,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     private OnFocusCallback mOnFocusCallback;
     private boolean mIsVisible = false;
 
-    private float mScaleX;
-    private float mScaleY;
+    private Options mOptions;
 
     protected TextView mTitleView;
     private AnimatorHelper mAnimatorHelper;
@@ -430,8 +429,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
     }
 
     private void runFocusAnimation(View focusView, Options options) {
-        mScaleX = options.scaleX;
-        mScaleY = options.scaleY;
+        mOptions = options;
 
         getBorderView().setAlpha(1f);
         mTitleView.setAlpha(0);
@@ -599,7 +597,7 @@ public abstract class AbsFocusBorder extends FrameLayout implements FocusBorder,
                 final View focused = null != border ? border.getOldFocusView() : null;
                 if (null != focused && !(focused instanceof RecyclerView)) {
                     if (border.mReAnim || mScrolledX != 0 || mScrolledY != 0) {
-                        border.runBorderAnimation(focused, Options.get(border.mScaleX, border.mScaleY), true);
+                        border.runBorderAnimation(focused, border.mOptions, true);
                     }
                 }
                 mScrolledX = mScrolledY = 0;
